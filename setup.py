@@ -10,7 +10,7 @@ setup(name='gustav',
       author_email='cbrown1@pitt.edu',
       maintainer='Christopher Brown',
       maintainer_email='cbrown1@pitt.edu',
-      packages=['gustav',],
+      packages=['gustav', 'gustav.frontends', 'gustav.methods', 'gustav.user_scripts'],
       platforms = ['linux'],
       classifiers = [
         'Development Status :: 4 - Beta',

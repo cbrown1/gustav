@@ -36,8 +36,8 @@
     example, the setup function is where many aspects of the experiment are 
     set, such as the name of the experiment, where and how to save data, what 
     the experimental variables and their levels are, and so on. The best way 
-    to understand how one works is to have a look at one. See the test_gustav 
-    python scripts in the user_scripts directory for more information.
+    to understand how one works is to have a look at one. See one of the 
+    gustav_settings.py files for more information.
 
 """
 
