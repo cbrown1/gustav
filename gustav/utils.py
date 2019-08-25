@@ -1,27 +1,25 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2014 Christopher Brown
+# Copyright (c) 2010-2019 Christopher Brown
 #
-# This file is part of Psylab.
+# This file is part of Gustav.
 #
-# Psylab is free software: you can redistribute it and/or modify
+# Gustav is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Psylab is distributed in the hope that it will be useful,
+# Gustav is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Psylab.  If not, see <http://www.gnu.org/licenses/>.
+# along with Gustav.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Bug reports, bug fixes, suggestions, enhancements, or other 
-# contributions are welcome. Go to http://code.google.com/p/psylab/ 
-# for more information and to contribute. Or send an e-mail to: 
-# cbrown1@pitt.edu.
+# Comments and/or additions are welcome. Send e-mail to: cbrown1@pitt.edu.
 #
+
 
 import os, sys, fnmatch
 import numpy as np
@@ -86,6 +84,8 @@ class exp:
     logFile = 'gustav_logfile_$date.log'
     logFile_unexpanded = ""
     logConsole = True
+    logConsoleDelay = False
+    logConsoleDelay_str = ''
     dataString_pre_exp = ''    #Write this string to datafile at exp begin
     dataString_pre_block = ''  #Write this string to datafile before every block
     dataString_pre_trial = ''  #Write this string to datafile before every trial
@@ -348,6 +348,7 @@ def process_variables(exp):
                     # There is only 1 level specified in factorial. Use that for all 'covariable' conditions for that var.
                     for condition in range(exp.var.nlevels_list):
                         exp.var.levelsbycond[v].append(exp.var.factorial[v][0])
+                        print ("{}: {}".format(v, exp.var.factorial[v][0]))
                     gotvar = True
             elif len(exp.var.covariable[v]) == 1:
                 # There is only one level specified. Use that for all conditions for that var.
@@ -379,7 +380,8 @@ def process_variables(exp):
         exp.var.orderarray = str_to_range(exp.var.order)
         exp.var.nblocks = len(exp.var.orderarray)
     debug(exp, "Got presentation order input string: {}".format(exp.var.order))
-    debug(exp, "Generated presentation order: {}".format(", ".join(str(i) for i in exp.var.orderarray)))
+    if len(exp.var.orderarray) > 0:
+        debug(exp, "Generated presentation order: {}".format(", ".join(str(i) for i in exp.var.orderarray)))
 # End process_variables
 
 
@@ -504,7 +506,10 @@ def log(exp, message):
     if message is not None and message != '':
         message_exp = exp.utils.get_expanded_vals_in_string(message, exp)
         if exp.logConsole:
-            print(message_exp),
+            if exp.logConsoleDelay:
+                exp.logConsoleDelay_str += message_exp
+            else:
+                print(message_exp),
         if exp.logFile is not None and exp.logFile is not '':
             write_data(message_exp, exp.logFile)
 
@@ -610,7 +615,7 @@ def get_expanded_vals_in_string(instr, exp):
     """
 
     outstr = instr.replace("$name", exp.name)
-    outstr = outstr.replace("$note", exp.note)
+    outstr = outstr.replace("$note", "\n# ".join(exp.note.split('\n')) )
     outstr = outstr.replace("$comments", "\n# ".join(exp.comments.split('\n')) )
     outstr = outstr.replace("$host", exp.host)
     outstr = outstr.replace("$subj", exp.subjID)
@@ -628,7 +633,7 @@ def get_expanded_vals_in_string(instr, exp):
     if len(exp.var.current)>0:
         currentvars = []
         currentvarsvals = []
-        for key, val in exp.var.current.iteritems():
+        for key, val in exp.var.current.items():
             currentvars.append(val)
             currentvarsvals.append("{} = {}".format(key, val))
             outstr = outstr.replace("$var[{}]".format(key), val)

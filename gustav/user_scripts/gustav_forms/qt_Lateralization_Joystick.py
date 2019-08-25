@@ -10,7 +10,7 @@ import time
 from PyQt4 import QtGui, QtCore, Qt
 import numpy as np
 import psylab
-import psylab.io.hid
+#import psylab.io.hid
 
 
 class Interface():
@@ -26,7 +26,7 @@ class Interface():
         (tennis/pong) will work as well as joysticks. 
     """
     prompt = ""
-    joystick = psylab.io.hid.joystick()
+#    joystick = psylab.io.hid.joystick()
     
     def __init__(self, bg_image, icon, parent=None):
         pass
@@ -213,15 +213,15 @@ class Interface():
 
         wait = True
         while wait:
-            c,e,d = self.joystick.listen()
-#            print c,e,d
-            if c == "Joystick" and e == "1 Horz":
-                # Gather data from paddle 1
-                self.data = float(d)/255.
-                self.dialog.update_position(self.data)
-            elif c == "Button" and e == "1" and d == 0:
-                # Wait until button 1 is released (data==0)
-                wait=False
+#            c,e,d = self.joystick.listen()
+##            print c,e,d
+#            if c == "Joystick" and e == "1 Horz":
+#                # Gather data from paddle 1
+            self.data = float(185)/255.
+            self.dialog.update_position(self.data)
+#            elif c == "Button" and e == "1" and d == 0:
+#                # Wait until button 1 is released (data==0)
+#                wait=False
             self.app.processEvents()
             time.sleep(.01)
         self.dialog.respArea.setVisible(False)

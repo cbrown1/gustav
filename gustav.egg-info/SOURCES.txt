@@ -17,6 +17,7 @@ gustav/frontends/tk.py
 gustav/methods/__init__.py
 gustav/methods/adaptive.py
 gustav/methods/constant.py
+gustav/methods/pest.py
 gustav/user_scripts/gustav__puretone_quietthresholds.py
 gustav/user_scripts/gustav_exp__ClosedSetSpeech.py
 gustav/user_scripts/gustav_exp__adaptive_quietthresholds.py

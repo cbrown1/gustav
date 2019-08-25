@@ -1,27 +1,25 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2014 Christopher Brown
+# Copyright (c) 2010-2019 Christopher Brown
 #
-# This file is part of Psylab.
+# This file is part of Gustav.
 #
-# Psylab is free software: you can redistribute it and/or modify
+# Gustav is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Psylab is distributed in the hope that it will be useful,
+# Gustav is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Psylab.  If not, see <http://www.gnu.org/licenses/>.
+# along with Gustav.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Bug reports, bug fixes, suggestions, enhancements, or other 
-# contributions are welcome. Go to http://code.google.com/p/psylab/ 
-# for more information and to contribute. Or send an e-mail to: 
-# cbrown1@pitt.edu.
+# Comments and/or additions are welcome. Send e-mail to: cbrown1@pitt.edu.
 #
+
 
 import os
 from random import shuffle
@@ -110,7 +108,7 @@ def run(experimentFile = None, subjectID = None, frontend = None, recordData = N
     try:
         methodi = __import__('methods',globals(), locals(), exp.method_str)
     except ImportError:
-        raise Exception("Error importing experimental method: " + exp.method_str)
+        raise Exception("Error importing experimental method: {}".format(exp.method_str))
     exp.method = getattr(methodi, exp.method_str)
 
     exp.utils.initialize_experiment( exp )
@@ -120,11 +118,11 @@ def run(experimentFile = None, subjectID = None, frontend = None, recordData = N
     if exp.recordData:
         got_dataString = False
         for datatype in exp.eventTypes:
-            if hasattr(exp, 'dataString_%s' % datatype):
+            if hasattr(exp, 'dataString_{}'.format(datatype)):
                 got_dataString = True
                 break
         if not got_dataString:
-            ret = exp.frontend.get_yesno(None, title = "Gustav!", 
+            ret = exp.frontend.get_yesno(None, title = "Gustav!",
                     prompt = "exp.recordData == True, but no dataStrings were found so no data will be record data.\nAre you sure you want to continue?")
             if not ret:
                 exp.utils.log(exp, "Gustav cancelled at user request (Prompt to record data)")
@@ -177,7 +175,10 @@ def run(experimentFile = None, subjectID = None, frontend = None, recordData = N
 
     # End gustav_is_go loop
     exp.utils.do_event(exp, 'post_exp')
+    if exp.logConsoleDelay:
+        print(exp.logConsoleDelay_str)
 
+    
 def main(argv):
     experimentFile = None
     subjectID = None
@@ -215,4 +216,3 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv[1:])
-

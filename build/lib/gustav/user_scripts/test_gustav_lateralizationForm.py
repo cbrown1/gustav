@@ -5,7 +5,7 @@ Created on Sun Feb  9 16:01:24 2014
 @author: code-breaker
 """
 
-from gustav_forms import qt_Lateralization as theForm
+from gustav_forms import qt_Lateralization_Joystick as theForm
 
 feedback = 'gustav_forms/Images/Animals'
 bg_image = 'gustav_forms/Images/SmileyFaces/smileyface_headphones.jpg'

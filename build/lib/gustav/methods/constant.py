@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2014 Christopher Brown
+# Copyright (c) 2010-2019 Christopher Brown
 #
-# This file is part of Psylab.
+# This file is part of Gustav.
 #
-# Psylab is free software: you can redistribute it and/or modify
+# Gustav is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Psylab is distributed in the hope that it will be useful,
+# Gustav is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Psylab.  If not, see <http://www.gnu.org/licenses/>.
+# along with Gustav.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Comments and/or additions are welcome. Send e-mail to: cbrown1@pitt.edu.
 #
+
 
 """Method of constant stimuli for Gustav
 
@@ -44,11 +45,14 @@ constant_vars = {
 
 def pre_exp(exp):
     # Only set these if None, in case they were set in experiment file setup, which has run already
-    if not exp.var.constant.has_key('trialsperblock'):
+#    if not exp.var.constant.has_key('trialsperblock'):
+    if 'trialsperblock' not in exp.var.constant:
         raise Exception("The following constant variables must be set: \n\nexp.var.constant['trialsperblock']\n")
-    if not exp.var.constant.has_key('startblock'):
+#    if not exp.var.constant.has_key('startblock'):
+    if 'startblock' not in exp.var.constant:
         exp.var.constant['startblock'] = 1
-    if not exp.var.constant.has_key('starttrial'):
+#    if not exp.var.constant.has_key('starttrial'):
+    if 'starttrial' not in exp.var.constant:
         exp.var.constant['starttrial'] = 1
 
     if exp.logString_pre_exp == None:
