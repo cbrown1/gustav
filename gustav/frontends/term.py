@@ -22,22 +22,11 @@
 
 
 import os, sys
-try:
-    # Python2
-    import Tkinter as tk
-    import tkFileDialog as filedialog
-except ImportError:
-    # Python3
-    import tkinter as tk
-    from tkinter import filedialog
 
 try: input = raw_input
 except: pass
 
 name = 'term'
-
-def show_config(exp,run,var,stim,user):
-    print("Sorry, there is no terminal version of the Experiment Configuration Dialog.")
 
 def get_file(parent=None, title = 'Open File', default_dir = "", file_types = ("All files (*.*)")):
     """Opens a file dialog, returns file path as a string
@@ -45,34 +34,32 @@ def get_file(parent=None, title = 'Open File', default_dir = "", file_types = ("
         To specify filetypes, use the (qt) format:
         "Python or Plain Text Files (*.py *.txt);;All files (*.*)"
     """
-    ftl = file_types.split(";;")
-    fts = []
-    for ft in ftl:
-        d,t = ft.split("(")
-        fts.append(tuple([d," ".join(t.strip(" )").split())]))
-    toplevel=tk.Tk()
-    toplevel.withdraw()
-    fname = filedialog.askopenfilename( title = title, initialdir = default_dir, filetypes = fts, multiple = False)
-    toplevel.deiconify()
-    toplevel.destroy()
-    if isinstance(fname, tuple):
-        # you suck tk
-        return ''
-    else:
-        return fname
+
+    getting_file = True
+    while getting_file:
+        ret = input("{} ({}): ".format(title, default_dir))
+        if not os.path.exists(ret):
+            print("File does not exist: {}".format(ret))
+        elif not os.path.isfile(ret):
+            print("Not a file: {}".format(ret))
+        else:
+            getting_file = False
+    return ret
+
 
 def get_folder(parent=None, title = 'Open Folder', default_dir = ""):
     """Opens a folder dialog, returns the path as a string
     """
-    toplevel=tk.Tk()
-    toplevel.withdraw()
-    fname = filedialog.askdirectory( title = title, initialdir = default_dir )
-    toplevel.deiconify()
-    toplevel.destroy()
-    if isinstance(fname, tuple):
-        return ''
-    else:
-        return fname
+    getting_folder = True
+    while getting_folder:
+        ret = input("{} ({}): ".format(title, default_dir))
+        if not os.path.exists(ret):
+            print("Path does not exist: {}".format(ret))
+        elif not os.path.isdir(ret):
+             print("Path is not a folder: {}".format(ret))
+        else:
+            getting_folder = False
+    return ret
 
 def get_item(parent=None, title = 'User Input', prompt = 'Choose One:', items = [], current = 0, editable = False):
     """Opens a simple prompt to choose an item from a list, returns a string

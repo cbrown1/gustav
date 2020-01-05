@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2019 Christopher Brown
+# Copyright (c) 2010-2020 Christopher Brown
 #
-# This file is part of Gustav.
+# This file is part of gustav.
 #
-# Gustav is free software: you can redistribute it and/or modify
+# gustav is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Gustav is distributed in the hope that it will be useful,
+# gustav is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Gustav.  If not, see <http://www.gnu.org/licenses/>.
+# along with gustav.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Comments and/or additions are welcome. Send e-mail to: cbrown1@pitt.edu.
 #
@@ -31,9 +31,6 @@ except ImportError:
     from tkinter import filedialog, simpledialog, messagebox
 
 name = 'tk'
-
-def show_config(exp,run,var,stim,user):
-    print("Sorry, there is no tk version of the Experiment Configuration Dialog.")
 
 def get_file(parent=None, title = 'Open File', default_dir = "", file_types = ("All files (*.*)")):
     """Opens a file dialog, returns file path as a string

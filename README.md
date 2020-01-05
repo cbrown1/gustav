@@ -187,9 +187,9 @@ The order of presentation of the conditions is specified in `exp.var.order`. A n
 
 There are currently two psychophysical methods available:
 
-    - Method of constant stimuli
+    - `constant` : Method of constant stimuli
 
-    - Adaptive tracking
+    - `adaptive` : Adaptive tracking
 
 
 ### Method of Constant Stimuli
@@ -332,7 +332,24 @@ else:
 
 ## User Forms
 
-To do...
+There are several forms available for common psychoacoustics experiments. They utilize the curses library, which has several advantages:
+
+    (1) they require no external libraries to use [1]
+    (2) they are extremely lightweight, fast, and portable
+    (3) they run right in the console
+    (4) they are easy to edit/modify
+
+Currently, the forms available are:
+
+    - nafc : A form for a subject to run in an n-alternative force-choice paradigm
+    - speech : A form for an experimenter to control a typical speech intelligibility experiment
+    - lateralization : A form for a subject to run in a lateralization experiment
+    - rt : A form for a subject to run in a reaction time experiment
+
+See the gustav/forms and gustav/user_scripts folders for more information on how to use them
+
+
+[1] Windows requires the windows_curses library to be installed: pip install windows-curses
 
 
 ## Installing

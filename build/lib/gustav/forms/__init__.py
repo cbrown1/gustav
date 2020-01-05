@@ -20,27 +20,3 @@
 # Comments and/or additions are welcome. Send e-mail to: cbrown1@pitt.edu.
 #
 
-try:
-	from PyQt4 import QtGui, QtCore
-except ImportError:
-	pass
-else:
-	from . import qt
-
-try:
-    # Python2
-    import Tkinter
-    import tkFileDialog, tkSimpleDialog, tkMessageBox
-except ImportError:
-	try:
-	    # Python3
-	    import tkinter
-	    from tkinter import filedialog, simpledialog, messagebox
-	except ImportError:
-		pass
-	else:
-		from . import tk
-else:
-	from . import tk
-
-from . import term

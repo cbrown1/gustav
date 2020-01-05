@@ -1,6 +1,6 @@
 Metadata-Version: 1.2
 Name: gustav
-Version: 0.5.0
+Version: 0.8.0
 Summary: Gustav: An event-based framework for psychophysical experiments
 
     Gustav tries to handle all of the aspects of experimentation that are 
@@ -38,5 +38,6 @@ Classifier: Operating System :: MacOS
 Classifier: Programming Language :: Python :: 2.7
 Classifier: Programming Language :: Python :: 3.5
 Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
 Classifier: Topic :: Multimedia :: Sound/Audio :: Speech
 Classifier: Topic :: Scientific/Engineering

@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2019 Christopher Brown
+# Copyright (c) 2010-2020 Christopher Brown
 #
-# This file is part of Gustav.
+# This file is part of gustav.
 #
-# Gustav is free software: you can redistribute it and/or modify
+# gustav is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Gustav is distributed in the hope that it will be useful,
+# gustav is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Gustav.  If not, see <http://www.gnu.org/licenses/>.
+# along with gustav.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Comments and/or additions are welcome. Send e-mail to: cbrown1@pitt.edu.
 #
@@ -208,7 +208,7 @@ def finish_trial(exp):
 def pre_block(exp):
     missing_vars = ''
     for key,val in dynamic_vars_user.items():
-        if not exp.var.dynamic.has_key(key):
+        if key not in exp.var.dynamic:
             missing_vars += "exp.var.dynamic['{}']\n".format(key)
     if missing_vars != '':
             raise Exception("The following dynamic variables must be set: \n\n{}".format(missing_vars))
@@ -216,7 +216,7 @@ def pre_block(exp):
     exp.var.dynamic = dynamic_vars_block.copy()
     exp.var.dynamic.update(dynamic_vars_track.copy())
     exp.var.dynamic.update(d.copy())
-    if exp.var.dynamic.has_key('step'):
+    if 'step' in exp.var.dynamic:
         exp.dynamic_step = exp.var.dynamic['step']
     else:
         exp.dynamic_step = step
