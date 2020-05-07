@@ -5,8 +5,9 @@
 import os, sys
 import numpy as np
 import time
+import curses
 import gustav
-from gustav.forms import nafc as theForm
+from gustav.forms import lateralization as theForm
 import psylab                              # https://github.com/cbrown1/psylab
 import medussa as m                        # https://github.com/cbrown1/medussa
 
@@ -14,12 +15,12 @@ def setup(exp):
     # setup gets called before the experiment begins
 
     # General Experimental Variables
-    exp.name = '_quiet_thresholds_'     # Experiment name. Accessible as $name when logging or recording data
-    exp.method = 'adaptive'             # 'constant' for constant stimuli, or 'adaptive' for a staircase procedure (SRT, etc)
-    exp.prompt = 'Which interval?'      # A prompt for subject
+    exp.name = '_lateralization_'   # Experiment name. Accessible as $name when logging or recording data
+    exp.method = 'constant'             # 'constant' for constant stimuli, or 'adaptive' for a staircase procedure (SRT, etc)
+    exp.prompt = 'Where did you hear it?' # A prompt for subject
     exp.frontend = 'tk'                 # The frontend to use when interacting with subject or experimenter. Can be 'term', 'tk', or 'qt' (pyqt4)
     exp.logFile = './$name_$date.log'   # The path to the logfile
-    exp.logConsole = True               # Whether to direct log info to the console
+    exp.logConsole = False               # Whether to direct log info to the console
     exp.logConsoleDelay = True          # When using a curses form, the console is not available. Set to True to delay print until end of exp when curses form is destroyed.
     exp.debug = False                   # Currently unused
     exp.recordData = True               # Whether to record data
@@ -31,7 +32,7 @@ def setup(exp):
     exp.cacheTrials = False             # Currently unused
     exp.validKeys = '1,2';              # comma-delimited list of valid responses
     exp.quitKey = '/'
-    exp.note = "Quiet thresholds for pure tones"
+    exp.note = "Lateralization of pure tones"
     exp.comments = '''\
     '''
 
@@ -77,38 +78,28 @@ def setup(exp):
     # and the dict {type, levels} is the val
     
     exp.var.factorial['frequency']= [
-                                    '125',
                                     '250',
-                                    '500',
-                                    '1000',
+                                    '4000',
                                   ]
-    def step(exp):
-        # A custom step function for adaptive tracking. This is actually the same as the default one, here for demo purposes
-        exp.var.dynamic['value'] += exp.var.dynamic['cur_step'] * exp.var.dynamic['steps'][exp.var.dynamic['n_reversals']]
-        exp.var.dynamic['value'] = max(exp.var.dynamic['value'], exp.var.dynamic['val_floor'])
-        exp.var.dynamic['value'] = min(exp.var.dynamic['value'], exp.var.dynamic['val_ceil'])
 
-    
-    exp.var.dynamic = { 'name': 'Level',     # Name of the dynamic variable
-                    'units': 'dBSPL',    # Units of the dynamic variable
-                    'alternatives': 2,   # Number of alternatives
-                    'steps': [5, 5, 2, 2, 2, 2, 2, 2], # Stepsizes to use at each reversal (#revs = len)
-                    #'steps': [2, 2],    # Stepsizes to use at each reversal (#revs = len)
-                    'downs': 2,          # Number of 'downs'
-                    'ups': 1,            # Number of 'ups'
-                    'val_start': 50,     # Starting value
-                    #'val_start': 0,     # Starting value
-                    'val_floor': 0,      # Floor
-                    'val_ceil': 70,      # Ceiling
-                    'val_floor_n': 3,    # Number of consecutive floor values to quit at
-                    'val_ceil_n': 3,     # Number of consecutive ceiling values to quit at
-                    'run_n_trials': 0,   # Set to non-zero to run exactly that number of trials
-                    'max_trials': 60,    # Maximum number of trials to run
-                    'vals_to_avg': 6,    # The number of values to average
-                    'step': step,        # optional. A custom step function. Signature: def step(exp)
-                    'max_level': 80, 
-                   }
+    exp.var.factorial['cue']= [
+                                    'ild',
+                                    'itd',
+                                  ]
 
+
+    """CONSTANT METHOD VARIABLES
+        The method of constant stimuli requires three variables to be set.
+            trialsperblock
+            startblock [crash recovery]
+            starttrial [crash recovery]
+    """
+    exp.var.constant = {
+        'trialsperblock' : 15,
+        'startblock' : 1,
+        'starttrial' : 1,
+        }
+        
     """CONDITION PRESENTATION ORDER
         Use 'prompt' to prompt for condition on each block, 'random' to randomize
         condition order, 'menu' to be able to choose from a list of conditions at
@@ -132,6 +123,10 @@ def setup(exp):
     exp.user.fs = 44100
     exp.user.isi = 250 # ms
     exp.user.interval = 500
+    exp.user.range = {}
+    exp.user.range['ild'] = [-15, 15]
+    exp.user.range['itd'] = [-750, 750]
+
 
 """CUSTOM PROMPT
     If you want a custom response prompt, define a function for it
@@ -140,16 +135,36 @@ def setup(exp):
     run.pylab_is_go to False
 """
 def prompt_response(exp):
+    exp.interface.show_Notify_Right(False)
+    exp.interface.update_Notify_Left('Respond', show=True, redraw=True)
+    exp.stim.x = exp.stim.n/2.
+    exp.interface.set_marker_pos(exp.stim.x/exp.stim.n)
+    exp.interface.show_Marker(True)
     while True:
         ret = exp.interface.get_resp()
-        if ret in exp.validKeys:
-            exp.run.response = ret
+        if ord(ret) == curses.KEY_LEFT:
+            exp.stim.x = max(exp.stim.x-1, 0)
+            exp.interface.set_marker_pos(exp.stim.x/exp.stim.n)
+        elif ord(ret) == curses.KEY_RIGHT:
+            exp.stim.x = min(exp.stim.x+1, exp.stim.n)
+            exp.interface.set_marker_pos(exp.stim.x/exp.stim.n)
+        elif ord(ret) == curses.KEY_SLEFT:
+            exp.stim.x = max(exp.stim.x-5, 0)
+            exp.interface.set_marker_pos(exp.stim.x/exp.stim.n)
+        elif ord(ret) == curses.KEY_SRIGHT:
+            exp.stim.x = min(exp.stim.x+5, exp.stim.n)
+            exp.interface.set_marker_pos(exp.stim.x/exp.stim.n)
+        elif ret == curses.KEY_ENTER or ord(ret) == 10 or ord(ret) == 13:
+            exp.run.response = str(exp.stim.x)
+            exp.user.resps.append(exp.stim.x)
             break
         elif ret in exp.quitKeys:
             exp.run.block_on = False
             exp.run.gustav_is_go = False
             exp.var.dynamic['msg'] = "Cancelled by user"
             break
+    exp.interface.show_Notify_Left(False)
+    exp.interface.show_Marker(False)
 
 def pre_trial(exp):
     """PRE_TRIAL
@@ -158,71 +173,61 @@ def pre_trial(exp):
         available. For the current level of a variable, use
         var.current['varname']. 
     """
-    exp.interface.update_Status_Right("Trial {:}".format(exp.run.trials_block), redraw=True)
-    isi = np.zeros(int(psylab.signal.ms2samp(int(exp.user.isi),int(exp.user.fs))))
-    interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
-    interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
-    interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
-    interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
+    exp.interface.update_Status_Right("Trial {:} of {:}".format(exp.run.trials_block+1, exp.var.constant['trialsperblock']), redraw=True)
+    cue = exp.var.current['cue']
 
-    exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
-    if exp.var.dynamic['correct'] == 1:
-        exp.stim.out = np.hstack((interval_sig, isi, interval_noi))
+    sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
+    sig = psylab.signal.ramps(sig,exp.user.fs)
+
+    if cue == 'ild':
+        exp.stim.out = psylab.signal.apply_ild(sig, exp.user.this_range[exp.run.trials_block])
     else:
-        exp.stim.out = np.hstack((interval_noi, isi, interval_sig))
-    
+        exp.stim.out = psylab.signal.apply_itd(sig, exp.user.fs, exp.user.this_range[exp.run.trials_block])
     
 def present_trial(exp):
     #pass
     #m.play_array(stim.out,user.fs)
     time.sleep(.1)
-    exp.interface.show_Notify_Left(False)    # Hide the 'press space' text since they just pressed it
-    exp.interface.show_Notify_Right(True)    # Show the listen text
-    exp.interface.show_Prompt(False)         # Don't show prompt during presentation b/c we don't want a response
-    exp.interface.show_Buttons(True, redraw=True) # Show buttons so user gets visual feedback on interfal playback
+    exp.interface.update_Notify_Right('Listen', show=True, redraw=True)
+    exp.interface.show_Marker(show=False)
+    exp.interface.show_Notify_Left(False)    # Show the listen text
     s = exp.audiodev.open_array(exp.stim.out,exp.user.fs)
     s.play()
-    for i in range(len(exp.interface.alternatives)):
-        exp.interface.set_border(i, 'Heavy', redraw=True)
-        time.sleep(exp.user.interval/1000.)
-        exp.interface.set_border(i, 'Light', redraw=True)
-        time.sleep(exp.user.isi/1000.)
+    while s.is_playing:
+        time.sleep(.05)
+
     exp.interface.show_Notify_Right(False)
-    exp.interface.show_Prompt(True, redraw=True)
-
-
-def post_trial(exp):
-#    exp.interface.button_light([1,2], None)
-    if exp.run.gustav_is_go:
-        if str(exp.var.dynamic['correct']).lower() == exp.run.response.lower():
-            color = 'Green'
-        else:
-            color = 'Red'
-        for i in range(3):
-            exp.interface.set_color(exp.var.dynamic['correct']-1, color, redraw=True)
-            time.sleep(.1)
-            exp.interface.set_color(exp.var.dynamic['correct']-1, 'None', redraw=True)
-            time.sleep(.05)
 
 def pre_exp(exp):
     exp.audiodev = m.open_device()
-    exp.interface = theForm.Interface(alternatives = exp.validKeys.split(","))
+    exp.interface = theForm.Interface()
     exp.interface.update_Title_Center(exp.note)
     exp.interface.update_Title_Right("Subject {:}".format(exp.subjID) )
-    exp.interface.show_Buttons(False)
+    exp.interface.update_Status_Left("Press '/' to quit")
     exp.interface.show_Notify_Left(False)
-    exp.interface.update_Notify_Right("Listen", show=False)
-    exp.interface.update_Prompt("Press any key to begin", show=True, redraw=True)
+    exp.interface.show_Notify_Right(False)
+    exp.stim.n = exp.interface.posbar_w * 2.
+    exp.user.results = "Subject: {:}\n".format(exp.subjID)
     # Wait for a keypress
     ret = exp.interface.get_resp()
-    exp.interface.update_Prompt("Which Interval?", show=False, redraw=True)
-
 
 def post_exp(exp):
     exp.interface.destroy()
+    print(exp.user.results)
 
 def pre_block(exp):
-    exp.interface.update_Status_Center("Block {:} of {:}".format(exp.run.block+1, exp.var.nblocks+1))
+    exp.interface.update_Status_Center("Block {:} of {:}".format(exp.run.block+1, exp.var.nblocks))
+    cue = exp.var.current['cue']
+    exp.user.this_range = np.linspace(exp.user.range[cue][0], exp.user.range[cue][1], exp.var.constant['trialsperblock'])
+    np.random.shuffle(exp.user.this_range)
+    exp.user.resps = []
+
+
+def post_block(exp):
+    cue = exp.var.current['cue']
+    f = exp.var.current['frequency']
+    std = np.std(exp.user.resps)
+    exp.user.results += "cue: {}, f: {:}, mean: {:}\n".format(cue,f,std)
 
 if __name__ == '__main__':
     argv = sys.argv[1:]

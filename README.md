@@ -21,7 +21,7 @@ Some terms:
 
     - `Condition` : A unique combination of levels across the experimental variables. Each condition has a unique condition number, assigned by gustav, that can be used to identify or specify that condition. 
 
-    - `Block`: A block is a group of one or more trials, run in a given condition (ie., in which the levels of each variable are held constant).
+    - `Block`: A block is a group of one or more trials, run in a given condition (ie., in which the levels of each variable are held constant). For an adaptive procedure, this might be referred to as a run. 
 
     - `Trial`: An event which usually involves presenting a stimulus to the subject, and soliciting a response, among other things.
 
@@ -30,7 +30,7 @@ Some terms:
 
 Gustav implements an event-driven framework, wherein certain events are called at certain times during testing. Most of these events are not required, although you will need some or not much will happen during the experiment. These events are specified in your experiment file as simple python functions, and the `exp` object is passed to each (eg: `def pre_block(exp):`) which holds, and thus makes available, all of the information about the experiment. If you don't specify an event, nothing will happen at that time during the experiment. Available events include:
 
-    - `setup` : Called once at the beginning of experiment, to initialize parameters, experimental variables, etc. This is the only required event.
+    - `setup` : Called once at the beginning of experiment, to initialize parameters, experimental variables, etc. This is the only required event. See `setup event` below for more.
 
     - `pre_exp` : Called once at the beginning of experiment but after setup. 
         - Eg., to initialize an empty datafile.
@@ -71,7 +71,7 @@ It is organized into several sub-classes:
 
     - `exp.user` : empty class available to the experimenter to hold any other data (read/write access)
 
-Note that read-only access is not enforced, the read-only descriptors above are just a reminder that you should not write to these classes.
+Note that read-only access is not enforced, the read-only descriptors above are just a reminder that these objects are used by gustav, and you should not write to these classes except in specific situations.
 
 
 ## Variables
@@ -88,7 +88,7 @@ There are 2 kinds of variables: factorial and covariable. Each is a dict
 Variables added as 'factorial' variables will be factorialized with each other. So, if you have 2 factorial variables A & B, each with 3 levels, you will end up with 9 conditions: A1B1, A1B2, A1B3, A2B1 etc..
 
 ```python
-exp.var.factorial['target'] = ['male', 'female3']
+exp.var.factorial['target'] = ['male', 'female']
 exp.var.factorial['masker'] = ['noise', 'babble']
 # Would result in 4 conditions: 
 #   1: target == male, masker == noise
@@ -153,7 +153,11 @@ Parameters include:
 
     - `exp.method` : 'constant' for constant stimuli, or 'adaptive' for an adaptive / staircase procedure (SRT, etc). See `Psychophysical Methods` for more information.
 
-    - `exp.logFile` = the path and name of a log file. Any data written to the console will also be written to this file. Name and date vars only on logfile name (eg., `$name_$date.log`)
+    - `exp.logFile` : the path and name of a log file. Any log info will be written to this file. Name and date vars only on logfile name (eg., `$name_$date.log`)
+
+    - `exp.logConsole` : A bool, indicating whether to write log info to the console window
+
+    - `exp.logConsoleDelay` : A bool, indicating whether to wait until the end of the experiment to print log info to the console iq21      11f logConsole==True (useful when using curses forms)
 
     - `exp.recordData` : A bool to indicate whether to record data using in-built methods. See `Recording Data` below for more information.
 
@@ -278,12 +282,65 @@ There are many string parameters available, use the parameter name and it will b
     exp.dataString_post_trial = "$subj,$trial,$date,$block,$condition,$user[pract],$user[snr],$currentvars[],$user[trial_kwp],$response\n"
 
 
-
-
 ## Logging
 
-To do...
+Logging is similar to recording data. Fairly robust logging capabilities are available, with the ability to log output to both a log file and the console. This is controlled in your setup function with the following parameters:
 
+    - `exp.logFile` : the path and name of a log file. Any log info will be written to this file. Name and date vars only on logfile name (eg., `$name_$date.log`)
+
+    - `exp.logConsole` : A bool, indicating whether to write log info to the console window
+
+    - `exp.logConsoleDelay` : A bool, indicating whether to wait until the end of the experiment to print log info to the console (useful when using curses forms)
+
+If either type of logging (file or console) is specified, then you should set some additional parameters to specify when and what to log. There is a parameter for each event:
+
+    - exp.logString_pre_exp
+    - exp.logString_pre_block
+    - exp.logString_pre_trial
+    - exp.logString_post_trial
+    - exp.logString_post_block
+    - exp.logString_post_exp
+
+You can set only the ones you would like. These parameters should be a string, with many expandable parameters available (see 'Recording Data' above). As an example, the following will log useful information at the beginning and end of each block, and after each trial:
+
+```python
+exp.logString_pre_block = "\n  Block $block of $blocks started at $time; Condition: $condition ; $currentvarsvals[' ; ']\n"
+exp.logString_post_trial = "    Trial $trial, target stimulus: $user[trial_stimbase], KWs correct: $response / possible: $user[trial_kwp] ($user[block_kwc] / $user[block_kwp]: $user[block_pc] %)\n"
+exp.logString_post_block = "  Block $block of $blocks ended at $time; Condition: $condition ; $currentvarsvals[' ; ']\n"
+```
+
+This will give output that looks something like:
+
+```bash
+  Block 1 of 8 started at 12:09:07; Condition: 8 ; snr = 6 ; processing = enhanced ; vocoder = True
+    Trial 1, target: KT001, KWs correct: 0 / possible: 5 (0 / 5: 0.0 %)
+    Trial 2, target: KT002, KWs correct: 0 / possible: 2 (0 / 7: 0.0 %)
+    Trial 3, target: KT003, KWs correct: 6 / possible: 6 (6 / 13: 46.2 %)
+    Trial 4, target: KT004, KWs correct: 2 / possible: 7 (8 / 20: 40.0 %)
+    Trial 5, target: KT005, KWs correct: 3 / possible: 9 (11 / 29: 37.9 %)
+    Trial 6, target: KT006, KWs correct: 1 / possible: 2 (12 / 31: 38.7 %)
+    Trial 7, target: KT007, KWs correct: 7 / possible: 7 (19 / 38: 50.0 %)
+    Trial 8, target: KT008, KWs correct: 1 / possible: 4 (20 / 42: 47.6 %)
+    Trial 9, target: KT009, KWs correct: 0 / possible: 5 (20 / 47: 42.6 %)
+    Trial 10, target: KT010, KWs correct: 0 / possible: 3 (20 / 50: 40.0 %)
+  Block 1 of 8 ended at 12:10:29; Condition: 8 ; snr = 6 ; processing = enhanced ; vocoder = True
+
+  Block 2 of 8 started at 12:10:29; Condition: 25 ; snr = 3 ; processing = enhanced ; vocoder = True
+    Trial 11, target: KT011, KWs correct: 0 / possible: 3 (0 / 3: 0.0 %)
+    Trial 12, target: KT012, KWs correct: 5 / possible: 5 (5 / 8: 62.5 %)
+    Trial 13, target: KT013, KWs correct: 0 / possible: 5 (5 / 13: 38.5 %)
+    Trial 14, target: KT014, KWs correct: 4 / possible: 8 (9 / 21: 42.9 %)
+    Trial 15, target: KT015, KWs correct: 0 / possible: 4 (9 / 25: 36.0 %)
+    Trial 16, target: KT016, KWs correct: 2 / possible: 2 (11 / 27: 40.7 %)
+    Trial 17, target: KT017, KWs correct: 2 / possible: 6 (13 / 33: 39.4 %)
+    Trial 18, target: KT018, KWs correct: 5 / possible: 5 (18 / 38: 47.4 %)
+    Trial 19, target: KT019, KWs correct: 1 / possible: 5 (19 / 43: 44.2 %)
+    Trial 20, target: KT020, KWs correct: 4 / possible: 7 (23 / 50: 46.0 %)
+  Block 2 of 8 ended at 12:11:54; Condition: 25 ; snr = 3 ; processing = enhanced ; vocoder = True
+
+...
+
+```
 
 ## Frontends
 
@@ -349,20 +406,29 @@ Currently, the forms available are:
 See the gustav/forms and gustav/user_scripts folders for more information on how to use them
 
 
-[1] Windows requires the windows_curses library to be installed: pip install windows-curses
+[1] Windows requires the curses library to be installed. It is recommended to install curses from [Christoph Gohlke's repository](https://www.lfd.uci.edu/~gohlke/pythonlibs/#curses). 
 
 
 ## Installing
 
+gustav is a pure python package, so installation should be straightforward. Having PyQt4 installed is optional.
 
-### Download:
+### pypi
+
+```bash
+pip install --user gustav
+```
+
+### Manual Installation
+
+#### Download:
 
 ```bash
 git clone https://github.com/cbrown1/gustav.git
 ```
 
 
-### Compile and install:
+#### Compile and install:
 
 ```bash
 python setup.py build
@@ -374,6 +440,10 @@ sudo python setup.py install
 
 See the test_gustav set of scripts in the user_scripts directory for examples.
 
+For psychoacoustics work, consider these additional packages:
+
+    - [psylab](https://github.com/cbrown1/psylab) contains many useful functions and tools
+    - [medussa](https://github.com/cbrown1/medussa) can be used to present sound. [Windows installers here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#medussa)
 
 ## Authors
 

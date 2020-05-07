@@ -1,0 +1,74 @@
+ <!DOCTYPE html>
+<html>
+<head>
+<style>
+.center-container {
+  text-align: center;
+}
+.center-element {
+  display: inline-block;
+}
+
+.button {
+    margin: 15px;
+    border: 1px outset blue;
+    background-color: lightBlue;
+    height:60px;
+    width:60px;
+    cursor:pointer;
+    padding: 20 20 px;
+    //outline: 2px solid transparent;
+    outline-width: 2px;
+    outline-style: solid;
+    outline-color: green;
+    outline-offset: 6px;
+    border-radius: 5px;
+}
+
+.butt:hover {
+   background-color: blue;
+    color:white;
+}
+</style>
+</head>
+<body>
+<script>
+    function response(id)
+    {
+//        alert(document.getElementById(id).style.outline.color);
+        document.getElementById(id).style.outlineColor = "transparent";
+    };
+
+    document.onkeydown = function(event) {
+        if (event.key == "1" && event.ctrlKey) {
+          if (document.getElementById("1").style.outlineColor === "green") {
+            document.getElementById("1").style.outlineColor = "transparent";
+          } else {
+            document.getElementById("1").style.outlineColor = "green";
+          };
+        } else if (event.key == "2" && event.ctrlKey) {
+          if (document.getElementById("2").style.outlineColor === "green") {
+            document.getElementById("2").style.outlineColor = "transparent";
+          } else {
+            document.getElementById("2").style.outlineColor = "green";
+          };
+        } else if (event.key == "3" && event.ctrlKey) {
+          if (document.getElementById("3").style.outlineColor === "green") {
+            document.getElementById("3").style.outlineColor = "transparent";
+          } else {
+            document.getElementById("3").style.outlineColor = "green";
+          };
+        }; 
+    };
+
+</script>  
+
+<div class="center-container">
+<div class="center-element">
+<input class="button" id="1" type="button" value="1" onClick="response(this.id)"/>
+<input class="button" id="2" type="button" value="2" onClick="response(this.id)"/>
+<input class="button" id="3" type="button" value="3" onClick="response(this.id)"/>
+</div></div>
+
+</body>
+</html> 
