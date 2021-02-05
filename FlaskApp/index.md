@@ -7,3 +7,17 @@ cd FlaskApp
 python app.py
 ```
 Go to your browser and open `0.0.0.0:5000`.
+
+## Server Installations
+
+```
+# distutils was missing for some reason
+sudo apt-get install python3-distutils
+
+# and also pip was missing
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3 get-pip.py
+
+# install flask
+pip3 install flask
+```
