@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NAFC</title>
+  <script src="{{url_for('static', filename='jquery-3.2.1.min.js')}}"></script>
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
   <style>
     body {
@@ -55,6 +56,15 @@
   </nav>
 
   <div class="container">
+    <label>Random Sound</label>
+    <div class="btn-group btn-group-justified" role="group" aria-label="...">
+      <div class="btn-group" role="group">
+        <button type="button" id="randomSound" class="btn btn-default toggleOutlet" onclick="getSound(this)">
+          <buttonText>Get random sound from server</buttonText>
+        </button>
+      </div>
+    </div>
+
     <label>Select Sound</label>
     <div class="btn-group btn-group-justified" role="group" aria-label="...">
       <div class="btn-group" role="group">
@@ -77,7 +87,7 @@
     <label>Play Sound</label>
     <div class="btn-group btn-group-justified" role="group" aria-label="...">
       <audio id="audioWav">
-        <source src="static/guitar.wav">
+        <source src="static/audio/guitar.wav">
       </audio>
       <div class="btn-group" role="group">
         <button type="button" name="0" value="on" class="btn btn-default toggleOutlet" onclick="playAudio(this);">
@@ -104,10 +114,18 @@
 
 </body>
 <script>
+  let serverResponse;
   let selectedSound = "guitarSound";
-  function send_button(objButton) {
+
+  async function getSound(objButton) {
     var data = {'id': objButton.id, 'value': objButton.value};
+    $.ajaxSetup({async: false});
     serverResponse = $.post("/postmethod", data);
+    let audioFile = await serverResponse.responseJSON[0];
+    document.getElementById('audioWav').src = audioFile;
+    let audioName = audioFile.split("/")[2].split(".")[0];
+    document.getElementById('randomSound').innerHTML = "<b>" + audioName + "</b>";
+    document.getElementById('audioWav').load();
   }
 
   async function playAudio(objButton) {
@@ -120,15 +138,15 @@
 
   async function changeSound(objButton) {
     if (objButton.id == "guitarSound") {
-      document.getElementById('audioWav').src = "static/guitar.wav";
+      document.getElementById('audioWav').src = "static/audio/guitar.wav";
       objButton.style.backgroundColor = "green";
     }
     if (objButton.id == "pluckSound") {
-      document.getElementById('audioWav').src = "static/pluck.wav";
+      document.getElementById('audioWav').src = "static/audio/pluck.wav";
       objButton.style.backgroundColor = "green";
     }
     if (objButton.id == "claveSound") {
-      document.getElementById('audioWav').src = "static/clave.wav";
+      document.getElementById('audioWav').src = "static/audio/clave.wav";
       objButton.style.backgroundColor = "green";
     }
     document.getElementById('audioWav').load();
@@ -176,7 +194,6 @@
     }
   }
 </script>
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-<script src="{{url_for('static', filename='jquery-3.2.1.min.js')}}"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
 </html>
