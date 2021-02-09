@@ -63,3 +63,12 @@ class Experiment(object):
                     'delay': 500
                   }
         self.response = output
+
+
+        def stop(self, data):
+            self.read(data)
+            output = {
+              "type": "stopExperiment",
+              "message" : "Experiment completed, thank you for participating",
+            }
+            self.response = output
