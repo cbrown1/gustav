@@ -1,0 +1,8 @@
+{
+  "--background_color" : "#232323",
+  "--text_color" : "#fff",
+  "--main_color": "#ea4335",
+  "--second_color": "#249a41",
+  "--main_font": "'Open Sans', sans-serif",
+  "--main_transation": "all .5s"
+}

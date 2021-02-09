@@ -1,0 +1,20 @@
+{
+  "type": "trial",
+  "lower_left_text": "",
+  "lower_right_text": "",
+  "items": [
+    {
+      "name" : "Gitar",
+      "file": "sounds/guitar.mp3",
+      "id" : 1
+    },
+    {
+      "name" : "Clave",
+      "file": "sounds/clave.wav",
+      "id" : 2
+    }
+  ],
+  "prompt" : "Select a sound (press 1 or 2)",
+  "answer" : 1,
+  "delay": 500,
+}
