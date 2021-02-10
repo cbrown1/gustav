@@ -92,8 +92,15 @@ var playBtn = function (elem){
 
 
 }
+let trialNo = 1;
 var getJsonApi = function (){
-    $.getJSON( "api.json", function( data ) {
+    $.ajaxSetup({async: false});
+    trialNo += 1;
+    let serverResponse = $.post("/api", {'type': 'trial', 'id': 1, 'trial': trialNo});
+    let responseJSON = serverResponse.responseJSON;
+    console.log(responseJSON);
+    $.getJSON( responseJSON.json, function( data ) {
+        console.log(data);
         var items = [];
         $.each( data.items, function( key, val ) {
             items.push('<div><button type="button" onclick="playBtn(this);" data-id="' + val.id + '" data-sound="' + val.file + '">' + val.name + '</button><span></span></div>');
@@ -101,6 +108,7 @@ var getJsonApi = function (){
 
         $("body>section#testArea").html(items);
     });
+
 }
 
 

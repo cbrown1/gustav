@@ -36,16 +36,20 @@ def get_post():
 
 @app.route('/api', methods=['POST'])
 def api():
+    print(request.form)
     if request.form['type'] == "start":
-        Exp.start(request.form)
+        # Exp.start(request.form)
+        Exp.trial(request.form)
     elif request.form['type'] == "trial":
         Exp.trial(request.form)
     elif request.form['type'] == "stop":
         Exp.stop(request.form)
     elif request.form['type'] == "abort":
         Exp.abort(request.form)
-    return Exp.response
+    print(Exp.response)
+    Exp.response['json'] = url_for('static', filename=Exp.response['json'])
+    return jsonify(Exp.response)
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True, port=5500)
