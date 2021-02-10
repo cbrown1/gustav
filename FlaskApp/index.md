@@ -19,5 +19,9 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python3 get-pip.py
 
 # install flask
-pip3 install flask
+
+
+# install requests
+pip3 install requests
+
 ```
