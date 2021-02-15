@@ -1,29 +1,39 @@
 var mainUrl = "";
-var apiUrl = "http://psylab.org:5000/api";
+var apiUrl = "/api";
+var formUrl = "static/consent_form.html"
 var abortBtn = function (){
     $('.top-right').on("click",function() {
         var confirm = window.confirm("Are you sure you want to cancel the test?");
 
         if (confirm){
-            alert("tamam kanka iptal ettim")
+            // alert("tamam kanka iptal ettim")
+            let formdata = {'type': 'abort', 'id': sessionStorage.getItem("userid")}
+            let serverResponse = $.post(apiUrl, formdata);
+            serverResponse.done(function( data ) {
+              console.log(data);
+              alert(data.message);
+              location.reload();
+            });
+            // Bos sayfaya mesaj ekle
         }
     });
 }
 var mainColors = function (){
-    // $.getJSON(mainUrl + "colors.json", function(data) {
-    $.getJSON("static/colors.json", function(data) {
-        $.each(data, function(key, val ) {
-            if (key == "loading_bars"){
-                $("body").addClass("loading_bars-"+val);
-            }else{
-                document.documentElement.style.setProperty(key, val);
-            }
-        });
+    let serverResponse = $.post("/api", {'type': 'style'});
+    let responseJSON = serverResponse.responseJSON;
+    $.each( responseJSON, function(key, val ) {
+        if (key == "loading_bars"){
+            $("body").addClass("loading_bars-"+val);
+        }else{
+            document.documentElement.style.setProperty(key, val);
+        }
     });
 }
+
 var startText = function (){
-    // $.getJSON(mainUrl + 'start.json',function (data){
-    $.getJSON('static/start.json',function (data){
+    let formdata = {'type': 'start', 'id': sessionStorage.getItem("userid")}
+    let serverResponse = $.post(apiUrl, formdata);
+    serverResponse.done(function( data ) {
         $(".logoArea img").attr("src",data.logo);
         $("#welcome .contextArea p").html(data.message);
         $("#agreeBtn").html(data.accept_btn);
@@ -134,16 +144,9 @@ var playBtn = function (elem){
             section.find("p").html(section.data("prompt2"));
         }
     }
-
+    // Butun ses dosyalari oynadiktan sonra
     if (notListened()){
-        $.ajax({
-            type: "POST",
-            url: "post.html",
-            data: {val:el.data("id")},
-            success: function (data){
-                console.log(data)
-            }
-        });
+        getJsonApi();
     }else{
         el.addClass("playing");
         diasbleAllPlayButtons();
@@ -185,49 +188,38 @@ var getJsonApi = function (){
         sessionStorage.setItem("userid", currentTime + parseInt(Math.random(1111,999999) * 10000));
     }
 
-    /*var formdata = {id:sessionStorage.getItem("userid")};
-    $.ajax({
-        url: apiUrl,
-        type: 'POST',
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type':'application/json'
-        },
-        dataType: "json",
-        data: JSON.stringify(formdata),
-        success: function (data) {
-            console.log(data);
-        }
-    });*/
+    // POST ---------------------------------------------------
+    let formdata = {'type': 'trial', 'id': sessionStorage.getItem("userid")}
+    let serverResponse = $.post(apiUrl, formdata);
+    serverResponse.done(function( data ) {
+      console.log(data);
+      switch (data.type) {
+          case "start":
+              alert("test")
+              break;
+          case "trial":
+              var items = [];
+              items.push('<p class="w-100 text-center">' + data.prompt1 + '</p>');
+              items.push('<span class="top-left">' + data.upper_left_text + '</span>');
+              items.push('<span class="bottom-left">' + data.lower_left_text + '</span>');
+              items.push('<span class="bottom-right">' + data.lower_right_text + '</span>');
+              items.push('<span class="top-right"><img src="static/close.svg" /></span>');
+              $.each( data.items, function( key, val ) {
+                  var i = parseInt(key) +1;
+                  items.push('<div><button type="button" onclick="playBtn(this);" data-id="' + val.id + '" data-sound="' + val.file + '">' + i + '</button><span></span></div>');
+              });
 
-    $.getJSON(mainUrl + "static/trial.json", function( data ) {
+              $("body>section#testArea").html(items).attr("data-prompt2",data.prompt2).attr("data-delay",data.delay);
+              abortBtn();
 
-        switch (data.type) {
-            case "start":
-                alert("test")
-                break;
-            case "trial":
-                var items = [];
-                items.push('<p class="w-100 text-center">' + data.prompt1 + '</p>');
-                items.push('<span class="top-left">' + data.upper_left_text + '</span>');
-                items.push('<span class="bottom-left">' + data.lower_left_text + '</span>');
-                items.push('<span class="bottom-right">' + data.lower_right_text + '</span>');
-                items.push('<span class="top-right"><img src="static/close.svg" /></span>');
-                $.each( data.items, function( key, val ) {
-                    var i = parseInt(key) +1;
-                    items.push('<div><button type="button" onclick="playBtn(this);" data-id="' + val.id + '" data-sound="' + val.file + '">' + i + '</button><span></span></div>');
-                });
-
-                $("body>section#testArea").html(items).attr("data-prompt2",data.prompt2).attr("data-delay",data.delay);
-                abortBtn();
-
-                break;
-            case "stop":
-                alert("test 3")
-                break;
-            default:
-                break;
-        }
+              break;
+          case "stop":
+              alert("Experiment has ended")
+              location.reload();
+              break;
+          default:
+              break;
+      }
     });
 }
 var kvkkAreaCheck = function (){
@@ -246,6 +238,9 @@ var kvkkAreaCheck = function (){
 
     btn.on("click",function (){
         if (check.hasClass("checked")){
+            let formdata = {"id": sessionStorage.getItem("userid"), "type": "start"}
+            let serverResponse = $.post("/api", formdata);
+            console.log(serverResponse.responseJSON);
             checkKVKKButtons();
         }
     })
