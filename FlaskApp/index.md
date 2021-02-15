@@ -1,5 +1,6 @@
 # gustav web server
 A simple Python web server with a lightweight frontend to run psychoacoustics experiments.
+Requires Python >= 3.7
 
 ## Usage
 ```
@@ -19,7 +20,7 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python3 get-pip.py
 
 # install flask
-
+pip3 install flask
 
 # install requests
 pip3 install requests
