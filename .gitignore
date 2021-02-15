@@ -1,6 +1,7 @@
 # User
 .DS_Store
 FlaskApp/dev
+FlaskApp/static/exp
 
 # GitHub Pages
 _site
