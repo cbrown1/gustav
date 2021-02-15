@@ -10,86 +10,79 @@ class Experiment(object):
     def __init__(self, session_id="0"):
         self.root = 'static'
         self.out_dir = 'exp'
-        self.dir = os.path.join(self.root, self.out_dir, session_id)
+        self.dir = os.path.join(self.root, self.out_dir, str(session_id))
         self.sessions = {session_id: {"id": session_id, "dir": self.dir}}
         self.ses = self.sessions[session_id]
         self.response = self.ses
+        self.num_trial = 0
+
+    def __repr__(self):
+        return f"Psylab experiment\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}\n  Sessions: {len(self.sessions)}"
 
     def read(self, data):
         self.id = data['id']
-        self.dir = os.path.join(self.root, self.out_dir, data['id'])
-        if 'trial' in data:
-            self.num_trial = int(data['trial'])
-        else:
-            self.num_trial = 0
+        self.dir = os.path.join(self.root, self.out_dir, str(data['id']))
         if self.id not in self.sessions:
             self.sessions[self.id] = {'id': self.id, 'dir': self.dir, 'trial': self.num_trial}
         else:
             self.sessions[self.id] = {**data, **self.sessions[self.id]}
-        self.ses = self.sessions[data['id']]
+        self.ses = self.sessions[self.id]
+        print(self)
 
     def start(self, data):
+        self.num_trial = 0
         self.read(data)
-        # self.abort()
-        # os.makedirs(self.dir)
-        jsonf = os.path.join(self.dir, 'api.json')
-        output = {'type': 'start_experiment',
-                  'message': 'Click here or press space to start',
-                  'logo': 'static/index.svg',
-                  'json': os.path.join(self.out_dir, self.id, 'api.json')}
-        self.dump(output, jsonf)
+        self.abort(data)
+        os.makedirs(self.dir)
+        output = {'type': 'start',
+                  'message': "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment.",
+                  'logo': 'static/index.svg'}
         self.response = output
 
-    def abort(self):
+    def abort(self, data):
+        self.read(data)
         if os.path.exists(self.dir):
             print('Session exists! Deleting...')
             shutil.rmtree(self.dir)
+        output = {
+            'type': 'abort',
+            'message': "Experiment has been aborted."
+        }
+        self.response = output
+        self.num_trial = 0
 
     def trial(self, data):
         self.read(data)
         self.num_trial += 1
-        # self.num_trial = self.sessions[self.id]['trial'] + 1
         # Ask gustav for audio files
-        files = select_audio()
-        names = [i.split('/')[-1].split('.')[0] for i in files]
-        audio = []
-        for i, (f, n) in enumerate(zip(files, names)):
-            audio.append({'name': n, 'file': f, 'id': i})
-        # audio = [
-        #   {
-        #     "name" : "Gitar",
-        #     "file": "static/audio/guitar.wav",
-        #     "id" : 1
-        #   },
-        #   {
-        #     "name" : "Clave",
-        #     "file": "static/audio/clave.wav",
-        #     "id" : 2
-        #   }
-        # ]
-        jsonf = os.path.join(self.dir, 'api.json')
-        output = {
-                    'type': 'trial',
-                    'lower_left_text': 'Trial: {}'.format(self.num_trial),
-                    'lower_right_text': 'test',
-                    'items': audio,
-                    'prompt': 'Select a sound (press 1 or 2)',
-                    'answer': 1,
-                    'delay': 500,
-                    'json': os.path.join(self.out_dir, self.id, 'api.json')
-                  }
-        self.dump(output, jsonf)
-        self.response = output
+        # For testing stop the experiment after 3 trials
+        if self.num_trial >= 3:
+            self.stop(data)
+        else:
+            files = select_audio()
+            names = [i.split('/')[-1].split('.')[0] for i in files]
+            audio = []
+            for i, (f, n) in enumerate(zip(files, names)):
+                audio.append({'name': n, 'file': f, 'id': i})
+            output = {
+                        'type': 'trial',
+                        'lower_left_text': 'Trial: {}'.format(self.num_trial),
+                        'lower_right_text': 'lower_right_text',
+                        'upper_left_text': 'upper_left_text',
+                        'items': audio,
+                        'prompt1': 'Press space to listen',
+                        'prompt2': 'Select a sound (press 1 or 2)',
+                        'answer': 1,
+                        'delay': 500
+                      }
+            self.response = output
 
     def stop(self, data):
         self.read(data)
-        jsonf = os.path.join(self.dir, 'api.json')
         output = {
-          "type": "stopExperiment",
-          "message" : "Experiment completed, thank you for participating",
-          'json': os.path.join(self.out_dir, self.id, 'api.json')
+          "type": "stop",
+          "message" : "Experiment completed, thank you for participating"
         }
-        self.dump(output, jsonf)
         self.response = output
 
     def dump(self, data, filename):

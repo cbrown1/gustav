@@ -20,3 +20,9 @@ def post_request(url="http://0.0.0.0:5000/audio", data={"audio": "static/audio/c
         print(post.text)
         response = False
     return response
+
+
+def read_json(filename):
+    with open(filename, "r") as f:
+        data = json.load(f)
+    return data

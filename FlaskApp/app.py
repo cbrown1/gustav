@@ -1,7 +1,7 @@
 import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 
-from tools import select_audio
+from tools import select_audio, read_json
 from experiment import Experiment
 
 
@@ -32,9 +32,10 @@ def get_post():
 @app.route('/api', methods=['POST'])
 def api():
     print(request.form)
-    if request.form['type'] == "start":
-        # Exp.start(request.form)
-        Exp.trial(request.form)
+    if request.form['type'] == "style":
+        return jsonify(read_json("static/colors.json"))
+    elif request.form['type'] == "start":
+        Exp.start(request.form)
     elif request.form['type'] == "trial":
         Exp.trial(request.form)
     elif request.form['type'] == "stop":
@@ -42,7 +43,6 @@ def api():
     elif request.form['type'] == "abort":
         Exp.abort(request.form)
     print(Exp.response)
-    Exp.response['json'] = url_for('static', filename=Exp.response['json'])
     return jsonify(Exp.response)
 
 
