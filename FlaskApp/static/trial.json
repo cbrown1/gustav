@@ -1,20 +1,23 @@
 {
   "type": "trial",
-  "lower_left_text": "",
-  "lower_right_text": "",
+  "upper_left_text": "Trial: 1",
+  "lower_left_text": "lower_left_text",
+  "lower_right_text": "lower_right_text",
   "items": [
     {
-      "name" : "Gitar",
-      "file": "sounds/guitar.mp3",
+      "name" : "Bell",
+      "file": "static/audio/bell.wav",
       "id" : 1
     },
     {
       "name" : "Clave",
-      "file": "sounds/clave.wav",
+      "file": "static/audio/clave.wav",
       "id" : 2
     }
   ],
-  "prompt" : "Select a sound (press 1 or 2)",
+  "prompt1": "Press space to start listening",
+  "prompt2": "Select a sound (press 1 or 2)",
   "answer" : 1,
-  "delay": 500,
+  "delay": 5000,
+  "json": "exp/1/api.json"
 }

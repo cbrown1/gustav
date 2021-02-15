@@ -1,0 +1,6 @@
+{
+  "type": "start",
+  "message" : "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment.",
+  "accept_btn" : "ACCEPT",
+  "logo": "static/index.svg"
+}

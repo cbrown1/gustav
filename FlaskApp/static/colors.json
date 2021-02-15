@@ -3,6 +3,12 @@
   "--text_color" : "#fff",
   "--main_color": "#ea4335",
   "--second_color": "#249a41",
+  "--third_color": "#04255cde",
+  "--passive_color": "#999",
   "--main_font": "'Open Sans', sans-serif",
-  "--main_transation": "all .5s"
+  "--main_transation": "all .5s",
+
+
+  "--button_size" : "85px",
+  "loading_bars": false
 }

@@ -1,0 +1,21 @@
+{
+  "items": [
+    {
+      "file": "static/audio/bell.wav",
+      "name": "bell",
+      "id": 0
+    },
+    {
+      "file": "static/audio/bell.wav",
+      "name": "bell",
+      "id": 1
+    }
+  ],
+  "lower_left_text": "Trial: 10",
+  "prompt": "Select a sound (press 1 or 2)",
+  "lower_right_text": "test",
+  "type": "trial",
+  "delay": 500,
+  "answer": 1,
+  "json": "exp/1/api.json"
+}
