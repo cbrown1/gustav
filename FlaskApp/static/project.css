@@ -67,6 +67,13 @@ table {
     --button-played-background: transparent;
 
     --button_size: 85px;
+
+    --passive_color: #999;
+    --success_border: #249a41;
+    --error_border: #ea4335;
+
+    --start-page-fs: 26px;
+    --corner-text-fs: 16px;
 }
 
 .w-100{width: 100%;}
@@ -111,17 +118,17 @@ body > section{
     justify-content: center;
 }
 
-body > section#welcome .contextArea{
-    font-size: 26px;
+body > section#welcome .contextArea,body > section#info{
+    font-size: var(--start-page-fs);
     text-align: center;
 }
 
-body > section#welcome .contextArea code{
+body > section#welcome .contextArea code,body > section#info code{
     color: var(--main_color);
     font-weight: 600;
 }
 
-body > section#welcome button#startTest, body > section#kvkk #agreeBtn{
+body > section#welcome button#startTest, body > section#kvkk #agreeBtn, body > section#info button{
     color: var(--main_color);
     font-weight: 600;
     background: transparent;
@@ -194,7 +201,7 @@ body > section#testArea{
 body > section#testArea div{
     margin-top: 30px;
     position: relative;
-    margin-right: 15px;
+    margin-right: 35px;
 }
 
 body > section#testArea div button{
@@ -328,18 +335,21 @@ ul{
     position: absolute;
     left: 5vw;
     top: 5vw;
+    font-size: var(--corner-text-fs);
 }
 
 .bottom-left{
     position: absolute;
     left: 5vw;
     bottom: 5vw;
+    font-size: var(--corner-text-fs);
 }
 
 .bottom-right{
     position: absolute;
     right: 5vw;
     bottom: 5vw;
+    font-size: var(--corner-text-fs);
 }
 
 .top-right{
@@ -350,6 +360,59 @@ ul{
     filter: invert(1);
     cursor: pointer;
 }
+
+
+body > section#testArea div button.success:after,body > section#testArea div button.error:after{
+    content: "";
+    position: absolute;
+    width: 90%;
+    height: 90%;
+    background: var(--background_color);
+    transform: translate(-50%,-50%);
+    top: 50%;
+    left: 50%;
+}
+
+body > section#testArea div button.success:before{
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    background-image: url("data:image/svg+xml,%3Csvg height='417pt' viewBox='0 -46 417.81333 417' width='417pt' fill='rgb(0,128,0)' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m159.988281 318.582031c-3.988281 4.011719-9.429687 6.25-15.082031 6.25s-11.09375-2.238281-15.082031-6.25l-120.449219-120.46875c-12.5-12.5-12.5-32.769531 0-45.246093l15.082031-15.085938c12.503907-12.5 32.75-12.5 45.25 0l75.199219 75.203125 203.199219-203.203125c12.503906-12.5 32.769531-12.5 45.25 0l15.082031 15.085938c12.5 12.5 12.5 32.765624 0 45.246093zm0 0'/%3E%3C/svg%3E");
+    z-index: 9;
+    width: 30px;
+    height: 30px;
+    background-size: cover;
+}
+
+body > section#testArea div button.error:before{
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    background-image: url("data:image/svg+xml,%3Csvg height='329pt' viewBox='0 0 329.26933 329' fill='rgb(255,0,0)' width='329pt' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m194.800781 164.769531 128.210938-128.214843c8.34375-8.339844 8.34375-21.824219 0-30.164063-8.339844-8.339844-21.824219-8.339844-30.164063 0l-128.214844 128.214844-128.210937-128.214844c-8.34375-8.339844-21.824219-8.339844-30.164063 0-8.34375 8.339844-8.34375 21.824219 0 30.164063l128.210938 128.214843-128.210938 128.214844c-8.34375 8.339844-8.34375 21.824219 0 30.164063 4.15625 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921875-2.089844 15.082031-6.25l128.210937-128.214844 128.214844 128.214844c4.160156 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921874-2.089844 15.082031-6.25 8.34375-8.339844 8.34375-21.824219 0-30.164063zm0 0'/%3E%3C/svg%3E");    z-index: 9;
+    width: 30px;
+    height: 30px;
+    background-size: cover;
+}
+
+
+body > section#testArea div button.success{
+    color: var(--success_border);
+}
+
+body > section#testArea div button.error{
+    color: var(--error_border);
+}
+
+
+body > section#testArea div button.selectedBtn{
+    transform: scale(1.2);
+    box-shadow: 0 0 15px 5px rgb(255 255 255 / 10%);
+}
+
 
 /* Responsive Areas */
 @media (min-width: 576px) {
