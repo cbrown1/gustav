@@ -19,30 +19,25 @@ def nfac():
     return render_template('nafc.html')
 
 
-@app.route('/postmethod', methods=['POST'])
-def get_post():
-    pid, pvalue = request.form['id'], request.form['value']
-    f1, f2 = select_audio()
-    now = datetime.datetime.now()
-    time = now.strftime("%Y-%m-%d %H:%M")
-    print('Time: %s | f1: %s | f2: %s' % (time, f1, f2))
-    return jsonify([f1, f2])
-
-
 @app.route('/api', methods=['POST'])
 def api():
-    print(request.form)
+    print(f"Received: {dict(request.form)}")
     if request.form['type'] == "style":
         return jsonify(read_json("static/colors.json"))
     elif request.form['type'] == "start":
         Exp.start(request.form)
     elif request.form['type'] == "trial":
         Exp.trial(request.form)
+    elif request.form['type'] == "answer":
+        print(dict(request.form))
     elif request.form['type'] == "stop":
         Exp.stop(request.form)
     elif request.form['type'] == "abort":
         Exp.abort(request.form)
-    print(Exp.response)
+    elif request.form['type'] == "info":
+        Exp.info(request.form)
+    print(f"Sending: {Exp.response}")
+    Exp.dump()
     return jsonify(Exp.response)
 
 
