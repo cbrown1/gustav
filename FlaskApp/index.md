@@ -12,6 +12,10 @@ Go to your browser and open `0.0.0.0:5000`.
 ## Server Installations
 
 ```
+# install apache
+sudo apt-get install apache2
+sudo apt-get install libapache2-mod-wsgi-py3
+
 # distutils was missing for some reason
 sudo apt-get install python3-distutils
 
