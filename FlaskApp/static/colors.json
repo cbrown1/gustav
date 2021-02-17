@@ -10,5 +10,21 @@
 
 
   "--button_size" : "85px",
-  "loading_bars": false
+  "loading_bars": false,
+
+
+  "--success_border": "#249a41",
+  "--error_border": "#ea4335",
+
+  "--button-border": "1px",
+  "--button-background": "transparent",
+  "--button-hover-border": "1px",
+  "--button-hover-color": "#ccc",
+  "--button-hover-background": "transparent",
+  "--button-border-playing": "5px",
+  "--button-played-color": "#c0c0c0",
+  "--button-played-background": "transparent",
+
+  "--start-page-fs": "26px",
+  "--corner-text-fs:": "16px"
 }
