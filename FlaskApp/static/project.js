@@ -1,25 +1,17 @@
 var mainUrl = "";
 var apiUrl = "/api";
-var formUrl = "static/consent_form.html"
+var formUrl = "static/consent_form.html";
 var abortBtn = function (){
     $('.top-right').on("click",function() {
         var confirm = window.confirm("Are you sure you want to cancel the test?");
 
         if (confirm){
-            // alert("tamam kanka iptal ettim")
-            let formdata = {'type': 'abort', 'id': sessionStorage.getItem("userid")}
-            let serverResponse = $.post(apiUrl, formdata);
-            serverResponse.done(function( data ) {
-              console.log(data);
-              alert(data.message);
-              location.reload();
-            });
-            // Bos sayfaya mesaj ekle
+            getJsonApi({'type': 'abort', 'id': getID()});
         }
     });
 }
 var mainColors = function (){
-    let serverResponse = $.post("/api", {'type': 'style'});
+    let serverResponse = $.post(apiUrl, {'type': 'style'});
     let responseJSON = serverResponse.responseJSON;
     $.each( responseJSON, function(key, val ) {
         if (key == "loading_bars"){
@@ -29,9 +21,15 @@ var mainColors = function (){
         }
     });
 }
-
+var getID = function(){
+    if (!sessionStorage.getItem("userid")){
+        var currentTime = new Date().getTime();
+        sessionStorage.setItem("userid", currentTime + parseInt(Math.random(1111,999999) * 10000));
+    }
+    return sessionStorage.getItem("userid")
+}
 var startText = function (){
-    let formdata = {'type': 'start', 'id': sessionStorage.getItem("userid")}
+    let formdata = {'type': 'start', 'id': getID()}
     let serverResponse = $.post(apiUrl, formdata);
     serverResponse.done(function( data ) {
         $(".logoArea img").attr("src",data.logo);
@@ -56,15 +54,24 @@ var checkWelcomeButtons = function (btn = false){
 var checkKVKKButtons = function (btn = false){
     var changeArea = function (){
         $("body>section#kvkk").removeClass("active");
+        $("body>section#info").addClass("active");
+    }
+
+    changeArea();
+    infoArea();
+
+    setTimeout(function (){
+        $("body>section#kvkk").remove();
+    },500);
+}
+var checkInfoButton = function (btn = false){
+    var changeArea = function (){
+        $("body>section#info").removeClass("active");
         $("body>section#testArea").addClass("active");
     }
 
     changeArea();
     testArea();
-
-    setTimeout(function (){
-        $("body>section#kvkk").remove();
-    },500);
 }
 var startPage = function (){
     var section = $("body>section#welcome");
@@ -98,8 +105,13 @@ var startPage = function (){
                         var finder = section.find("div button");
                         var myKey = parseInt(e.key)-1;
                         finder.eq(myKey).trigger("click");
-                        console.log("seçimi yaptık")
-                    }
+                        console.log("seçimi yaptık", e.key);
+                        // let formdata = {'id': getID(), 'type': 'answer', 'answer': e.Key};
+                        // let serverResponse = $.post("/api", formdata);
+                        // serverResponse.done(function( data ) {
+                        //   console.log(data);
+                        // });
+                      }
                 }
             }else if(e.keyCode == 27){
                 $(".top-right").click();
@@ -112,6 +124,12 @@ var testArea = function (){
     if (item.length > 0){
         startPage();
         getJsonApi();
+    }
+}
+var infoArea = function (){
+    var item = $("body>section#info.active");
+    if (item.length > 0){
+        getJsonApi({'type': 'info', 'id': getID()});
     }
 }
 var diasbleAllPlayButtons = function (){
@@ -132,6 +150,7 @@ var notListened = function (){
     }
 }
 var playBtn = function (elem){
+    var testArea = $("#testArea");
     var el = $(elem);
 
     function ifAllListened(){
@@ -146,9 +165,34 @@ var playBtn = function (elem){
     }
     // Butun ses dosyalari oynadiktan sonra
     if (notListened()){
-        getJsonApi();
+
+        el.addClass("selectedBtn");
+
+        if (el.data("id") == testArea.data("answer")){
+            testArea.find("p.w-100.text-center").html("correct answer");
+        }else{
+            testArea.find("p.w-100.text-center").html("wrong answer");
+        }
+
+
+        diasbleAllPlayButtons();
+        testArea.find("button").each(function (){
+            if ($(this).data("id") == testArea.data("answer")){
+                $(this).addClass("success");
+                console.log("correct answer", testArea.data("answer"), $(this).data("id"));
+            }else{
+                $(this).addClass("error");
+                console.log("wrong answer", testArea.data("answer"), $(this).data("id"));
+            }
+        })
+        setTimeout(function (){
+            getJsonApi({'type': 'trial', 'id': getID(), answer:testArea.data("answer")});
+        },testArea.data("next-delay"));
     }else{
         el.addClass("playing");
+
+        testArea.find("p.w-100.text-center").html("Playing " + el.data("eq"));
+
         diasbleAllPlayButtons();
         const audio = new Audio(el.data("sound"));
 
@@ -165,6 +209,8 @@ var playBtn = function (elem){
         }
 
         audio.addEventListener('ended', function() {
+            var tArea = $("#testArea").find("p.w-100.text-center");
+            tArea.html(tArea.data("default"));
             el.addClass("listened");
             ifAllListened();
             el.removeClass("playing");
@@ -176,50 +222,72 @@ var playBtn = function (elem){
             if (testArea.find("button:not(.listened)")){
                 setTimeout(function (){
                     testArea.find("button:not(.listened)").eq(0).click()
-                },testArea.data("delay"))
+                },testArea.data("delay"));
             }
 
         }, false);
     }
 }
-var getJsonApi = function (){
-    if (!sessionStorage.getItem("userid")){
-        var currentTime = new Date().getTime();
-        sessionStorage.setItem("userid", currentTime + parseInt(Math.random(1111,999999) * 10000));
-    }
+var getJsonApi = function (formdata = {'type': 'trial', 'id': getID()}){
+    // if (!sessionStorage.getItem("userid")){
+    //     var currentTime = new Date().getTime();
+    //     sessionStorage.setItem("userid", currentTime + parseInt(Math.random(1111,999999) * 10000));
+    // }
 
     // POST ---------------------------------------------------
-    let formdata = {'type': 'trial', 'id': sessionStorage.getItem("userid")}
-    let serverResponse = $.post(apiUrl, formdata);
+    let serverResponse = $.post("/api", formdata);
     serverResponse.done(function( data ) {
-      console.log(data);
-      switch (data.type) {
-          case "start":
-              alert("test")
-              break;
-          case "trial":
-              var items = [];
-              items.push('<p class="w-100 text-center">' + data.prompt1 + '</p>');
-              items.push('<span class="top-left">' + data.upper_left_text + '</span>');
-              items.push('<span class="bottom-left">' + data.lower_left_text + '</span>');
-              items.push('<span class="bottom-right">' + data.lower_right_text + '</span>');
-              items.push('<span class="top-right"><img src="static/close.svg" /></span>');
-              $.each( data.items, function( key, val ) {
-                  var i = parseInt(key) +1;
-                  items.push('<div><button type="button" onclick="playBtn(this);" data-id="' + val.id + '" data-sound="' + val.file + '">' + i + '</button><span></span></div>');
-              });
+        switch (data.type) {
+            case "start":
+                alert("test")
+                break;
+            case "trial":
+                var items = [];
+                items.push('<p class="w-100 text-center" data-default="' + data.prompt1 + '">' + data.prompt1 + '</p>');
+                items.push('<span class="top-left">' + data.upper_left_text + '</span>');
+                items.push('<span class="bottom-left">' + data.lower_left_text + '</span>');
+                items.push('<span class="bottom-right">' + data.lower_right_text + '</span>');
+                items.push('<span class="top-right"><img src="static/close.svg" /></span>');
+                $.each( data.items, function( key, val ) {
+                    var i = parseInt(key) +1;
+                    items.push('<div><button type="button" onclick="playBtn(this);" data-eq="' + i + '" data-id="' + val.id + '" data-sound="' + val.file + '">' + i + '</button><span></span></div>');
+                });
 
-              $("body>section#testArea").html(items).attr("data-prompt2",data.prompt2).attr("data-delay",data.delay);
-              abortBtn();
+                $("body>section#testArea")
+                    .html(items).attr("data-prompt2",data.prompt2)
+                    .attr("data-delay",data.delay)
+                    .attr("data-next-delay",data.next_delay)
+                    .attr("data-answer",data.answer);
+                abortBtn();
 
-              break;
-          case "stop":
-              alert("Experiment has ended")
-              location.reload();
-              break;
-          default:
-              break;
-      }
+                break;
+            case "stop":
+                var changeArea = function (){
+                    $("body>section#testArea").removeClass("active");
+                    $("body>section#stop").addClass("active");
+                }
+
+                changeArea();
+                $("#stop").html('<p>' + data.message + '</p>');
+                break;
+            case "abort":
+                var changeArea = function (){
+                    $("body>section#testArea").removeClass("active");
+                    $("body>section#stop").addClass("active");
+                }
+
+                changeArea();
+                $("#stop").html('<p>' + data.message + '</p>');
+                break;
+            case "info":
+                var items = [];
+                items.push('<p>' + data.message + '</p>');
+                items.push("<button id='infoBtn' onclick='infoBtnCheck()'>OK</button>")
+                $("#info").html(items);
+                break;
+            default:
+                break;
+        }
     });
 }
 var kvkkAreaCheck = function (){
@@ -238,14 +306,17 @@ var kvkkAreaCheck = function (){
 
     btn.on("click",function (){
         if (check.hasClass("checked")){
-            let formdata = {"id": sessionStorage.getItem("userid"), "type": "start"}
-            let serverResponse = $.post("/api", formdata);
-            console.log(serverResponse.responseJSON);
             checkKVKKButtons();
         }
     })
 }
 
+var infoBtnCheck=function (){
+    let formdata = {"id": getID(), "type": "start"}
+    let serverResponse = $.post(apiUrl, formdata);
+    console.log(serverResponse.responseJSON);
+    checkInfoButton();
+}
 
 $(document).ready(function (){
     mainColors();
