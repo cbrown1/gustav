@@ -62,16 +62,15 @@ class Experiment(object):
             self.stop(data)
         else:
             files = select_audio()
-            files += files
             names = [i.split('/')[-1].split('.')[0] for i in files]
             audio = []
             for i, (f, n) in enumerate(zip(files, names), start=1):
-                audio.append({'name': n, 'file': f, 'id': i})
+                audio.append({'name': i, 'file': f, 'id': i})
             output = {
                         'type': 'trial',
                         'lower_left_text': 'Trial: {}'.format(self.num_trial),
-                        'lower_right_text': 'lower_right_text',
-                        'upper_left_text': 'upper_left_text',
+                        'lower_right_text': f'Session ID: {self.id}',
+                        'upper_left_text': 'Psylab NAFC Experiment',
                         'items': audio,
                         'prompt1': 'Press space to listen',
                         'prompt2': 'Select a sound (press 1 or 2)',
