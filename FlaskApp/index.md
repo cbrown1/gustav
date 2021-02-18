@@ -12,17 +12,27 @@ Go to your browser and open `0.0.0.0:5000`.
 ## Server Installations
 
 ```
+# install apache
+sudo apt-get install apache2
+sudo apt-get install libapache2-mod-wsgi-py3
+
 # distutils was missing for some reason
 sudo apt-get install python3-distutils
 
 # and also pip was missing
+sudo apt get install curl
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-python3 get-pip.py
+sudo python3 get-pip.py
 
-# install flask
-pip3 install flask
+# install requirements (flask, requests)
+sudo pip3 install flask requests
 
-# install requests
-pip3 install requests
+# install git
+sudo apt install git
+
+# clone gustav and run the server
+git clone https://github.com/kbsezginel/gustav.git
+cd gustav/FlaskApp
+python3 app.py
 
 ```
