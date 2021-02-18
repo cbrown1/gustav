@@ -1,6 +1,4 @@
-var mainUrl = "";
 var apiUrl = "/api";
-var formUrl = "static/consent_form.html";
 var abortBtn = function (){
     $('.top-right').on("click",function() {
         var confirm = window.confirm("Are you sure you want to cancel the test?");
@@ -10,6 +8,7 @@ var abortBtn = function (){
         }
     });
 }
+// Get styling information from the server
 var mainColors = function (){
     let serverResponse = $.post(apiUrl, {'type': 'style'});
     let responseJSON = serverResponse.responseJSON;
@@ -21,6 +20,7 @@ var mainColors = function (){
         }
     });
 }
+// Get session id
 var getID = function(){
     if (!sessionStorage.getItem("userid")){
         var currentTime = new Date().getTime();
@@ -71,6 +71,10 @@ var checkInfoButton = function (btn = false){
     }
 
     changeArea();
+    // Remove the info part after user clicks ok
+    setTimeout(function (){
+        $("body>section#info").remove();
+    }, 500);
     testArea();
 }
 var startPage = function (){
@@ -106,11 +110,6 @@ var startPage = function (){
                         var myKey = parseInt(e.key)-1;
                         finder.eq(myKey).trigger("click");
                         console.log("seçimi yaptık", e.key);
-                        // let formdata = {'id': getID(), 'type': 'answer', 'answer': e.Key};
-                        // let serverResponse = $.post("/api", formdata);
-                        // serverResponse.done(function( data ) {
-                        //   console.log(data);
-                        // });
                       }
                 }
             }else if(e.keyCode == 27){
@@ -185,8 +184,9 @@ var playBtn = function (elem){
                 console.log("wrong answer", testArea.data("answer"), $(this).data("id"));
             }
         })
+        // Send user selection
         setTimeout(function (){
-            getJsonApi({'type': 'trial', 'id': getID(), answer:testArea.data("answer")});
+            getJsonApi({'type': 'answer', 'id': getID(), answer:testArea.data("answer")});
         },testArea.data("next-delay"));
     }else{
         el.addClass("playing");
@@ -229,17 +229,12 @@ var playBtn = function (elem){
     }
 }
 var getJsonApi = function (formdata = {'type': 'trial', 'id': getID()}){
-    // if (!sessionStorage.getItem("userid")){
-    //     var currentTime = new Date().getTime();
-    //     sessionStorage.setItem("userid", currentTime + parseInt(Math.random(1111,999999) * 10000));
-    // }
-
     // POST ---------------------------------------------------
-    let serverResponse = $.post("/api", formdata);
+    let serverResponse = $.post(apiUrl, formdata);
     serverResponse.done(function( data ) {
         switch (data.type) {
             case "start":
-                alert("test")
+                alert("test");
                 break;
             case "trial":
                 var items = [];
@@ -248,9 +243,10 @@ var getJsonApi = function (formdata = {'type': 'trial', 'id': getID()}){
                 items.push('<span class="bottom-left">' + data.lower_left_text + '</span>');
                 items.push('<span class="bottom-right">' + data.lower_right_text + '</span>');
                 items.push('<span class="top-right"><img src="static/close.svg" /></span>');
+                // Add audio play buttons here
                 $.each( data.items, function( key, val ) {
                     var i = parseInt(key) +1;
-                    items.push('<div><button type="button" onclick="playBtn(this);" data-eq="' + i + '" data-id="' + val.id + '" data-sound="' + val.file + '">' + i + '</button><span></span></div>');
+                    items.push('<div><button type="button" onclick="playBtn(this);" data-eq="' + i + '" data-id="' + val.id + '" data-sound="' + val.file + '">' + val.name + '</button><span></span></div>');
                 });
 
                 $("body>section#testArea")
@@ -311,10 +307,8 @@ var kvkkAreaCheck = function (){
     })
 }
 
+// TO DO: remove this function and just call checkInfoButton
 var infoBtnCheck=function (){
-    let formdata = {"id": getID(), "type": "start"}
-    let serverResponse = $.post(apiUrl, formdata);
-    console.log(serverResponse.responseJSON);
     checkInfoButton();
 }
 
