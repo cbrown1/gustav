@@ -1,3 +1,4 @@
+import json
 import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 
@@ -21,8 +22,9 @@ def nfac():
 
 @app.route('/api', methods=['POST'])
 def api():
-    print(f"Received: {dict(request.form)}")
+    print(f"Received: {json.dumps(dict(request.form), indent=2)}")
     if request.form['type'] == "style":
+        # Initialize new ID?
         return jsonify(read_json("static/colors.json"))
     elif request.form['type'] == "start":
         Exp.start(request.form)
@@ -36,8 +38,8 @@ def api():
         Exp.abort(request.form)
     elif request.form['type'] == "info":
         Exp.info(request.form)
-    print(f"Sending: {Exp.response}")
-    Exp.dump()
+    print(f"Sending: {json.dumps(Exp.response, indent=2)}")
+    # Exp.dump()
     return jsonify(Exp.response)
 
 
