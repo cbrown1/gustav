@@ -25,7 +25,11 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 sudo python3 get-pip.py
 
 # install requirements (flask, requests)
-sudo pip3 install flask requests
+sudo pip3 install flask requests numpy
+
+sudo apt-get install libasound-dev
+# Install psylab
+# Install gustav
 
 # install git
 sudo apt install git
