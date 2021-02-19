@@ -32,6 +32,7 @@ def api():
         Exp.trial(request.form)
     elif request.form['type'] == "answer":
         print(dict(request.form))
+        Exp.trial(request.form)
     elif request.form['type'] == "stop":
         Exp.stop(request.form)
     elif request.form['type'] == "abort":

@@ -11,6 +11,8 @@ class Experiment(object):
         self.root = 'static'
         self.out_dir = 'exp'
         self.sessions = {}
+        self.freq1 = 1200
+        self.freq2 = 2000
 
     def __repr__(self):
         return f"Psylab experiment\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}\n  Sessions: {len(self.sessions)}"
@@ -61,7 +63,15 @@ class Experiment(object):
         if self.num_trial >= 5:
             self.stop(data)
         else:
-            files = select_audio()
+            if 'answer' in data:
+                if data['answer'] == "1":
+                    self.freq1 += 200
+                    self.freq2 += 200
+                else:
+                    self.freq1 -= 200
+                    self.freq2 -= 200
+            files = select_audio(self.freq1, self.freq2)
+            print("Frequency 1: {self.freq1} | 2: {self.freq2}")
             names = [i.split('/')[-1].split('.')[0] for i in files]
             audio = []
             for i, (f, n) in enumerate(zip(files, names), start=1):
