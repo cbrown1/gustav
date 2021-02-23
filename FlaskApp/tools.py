@@ -7,6 +7,7 @@ from datetime import datetime
 
 import scipy
 import numpy as np
+import soundfile as sf
 
 import psylab
 # import medussa
@@ -48,7 +49,8 @@ def generate_audio(filename="audio.wav", frequency=1000, duration=1000, level=30
     sig = psylab.signal.tone(float(frequency), fs, duration)
     sig = psylab.signal.ramps(sig, fs)
     sig = psylab.signal.atten(sig, max_level - level)
-    scipy.io.wavfile.write(filename, fs, sig)
+    sf.write(filename, sig, fs)
+    # scipy.io.wavfile.write(filename, fs, sig)
 
 
 def cleanup():
