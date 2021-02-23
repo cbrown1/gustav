@@ -80,7 +80,7 @@ class Experiment(object):
                         'type': 'trial',
                         'lower_left_text': 'Trial: {}'.format(self.num_trial),
                         'lower_right_text': f'Session ID: {self.id}',
-                        'upper_left_text': 'Psylab NAFC Experiment',
+                        'upper_left_text': 'Psylab n-AFC Experiment | Quiet Thresholds',
                         'items': audio,
                         'prompt1': 'Press space to listen',
                         'prompt2': 'Select a sound (press 1 or 2)',
@@ -104,7 +104,7 @@ class Experiment(object):
         self.read(data)
         output = {
           "type": "info",
-          "message": "NAFC Experiment"
+          "message": "n-AFC Experiment | Quiet Thresholds"
         }
         self.response = output
         print('info' + '-' * 30 + f'\n{self}')
