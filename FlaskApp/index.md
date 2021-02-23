@@ -39,4 +39,9 @@ git clone https://github.com/kbsezginel/gustav.git
 cd gustav/FlaskApp
 python3 app.py
 
+# Install pysoundfile
+conda install cffi numpy
+pip install pysoundfile
+sudo apt-get install libsndfile1
+
 ```
