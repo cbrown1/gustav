@@ -1,8 +1,9 @@
 import os
 import json
+import time
 import shutil
 
-from tools import select_audio
+from tools import select_audio, read_json
 
 
 class Experiment(object):
@@ -27,6 +28,36 @@ class Experiment(object):
             self.sessions[self.id] = {**data, **self.sessions[self.id]}
         self.ses = self.sessions[self.id]
         print(self)
+
+    def send_request(self, data):
+        """
+        Get response from gustav.
+        """
+        self.read(data)
+        self.request = data
+        self.response = data
+        if not hasattr(self, 'id'):
+            print('WARNING: No subject id available, skipping')
+        else:
+            self.expected_response = os.path.join(self.dir, f"g{self.id}_{self.num_trial}_{data['type']}.json")
+            data['response_file'] = self.expected_response
+            self.dump(data=data, prefix='c')
+
+    def get_response(self, sleep=0.1, max_timeout=300):
+        """
+        Get response from gustav.
+        """
+        print(f'Waiting for response: {self.expected_response}')
+        timeout = 0
+        while not os.path.exists(expected_out) or timeout <= max_timeout:
+            time.sleep(sleep)
+            timeout += sleep
+        if timeout <= max_timeout:
+            self.response = self.load(expected_out)
+        else:
+            print(f'Max timeout ({max_timeout} s) reached, no response!')
+            self.response = {}
+        return self.response
 
     def start(self, data):
         self.num_trial = 0
@@ -110,12 +141,22 @@ class Experiment(object):
         self.response = output
         print('info' + '-' * 30 + f'\n{self}')
 
+    def initialize(self, data):
+        self.read(data)
+        self.response = read_json("static/colors.json")
+
     def dump(self, data=None, filename=None, prefix='', suffix=''):
         """Dump data to json file"""
         if data is None:
             data = self.response
         if filename is None:
-            filename = os.path.join(self.dir, f"{prefix}{self.id}_{self.num_trial}_{self.response['type']}{suffix}.json")
+            filename = os.path.join(self.dir, f"{prefix}{self.num_trial}_{data['type']}{suffix}.json")
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
         print(f'dump -> {filename}')
+
+    def load(self, filename):
+        """Load json file"""
+        with open(filename, "r") as f:
+            data = json.load(f)
+        return data
