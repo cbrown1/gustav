@@ -7,10 +7,11 @@ from tools import select_audio
 
 class Experiment(object):
     """Psylab Experiment"""
-    def __init__(self, session_id="0"):
+    def __init__(self):
         self.root = 'static'
         self.out_dir = 'exp'
         self.sessions = {}
+        self.num_trial = 0
         self.freq1 = 1200
         self.freq2 = 2000
 
@@ -19,7 +20,7 @@ class Experiment(object):
 
     def read(self, data):
         self.id = data['id']
-        self.dir = os.path.join(self.root, self.out_dir, str(data['id']))
+        self.dir = os.path.join(self.root, self.out_dir, str(self.id))
         if self.id not in self.sessions:
             self.sessions[self.id] = {'id': self.id, 'dir': self.dir, 'trial': self.num_trial}
         else:
@@ -109,12 +110,12 @@ class Experiment(object):
         self.response = output
         print('info' + '-' * 30 + f'\n{self}')
 
-    def dump(self, data=None, filename=None):
+    def dump(self, data=None, filename=None, prefix='', suffix=''):
         """Dump data to json file"""
         if data is None:
             data = self.response
         if filename is None:
-            filename = os.path.join(self.dir, f"{self.response['type']}_{self.num_trial}.json")
+            filename = os.path.join(self.dir, f"{prefix}{self.id}_{self.num_trial}_{self.response['type']}{suffix}.json")
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
         print(f'dump -> {filename}')

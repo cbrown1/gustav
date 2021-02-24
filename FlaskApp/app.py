@@ -1,5 +1,5 @@
 import json
-import datetime
+from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 
 from tools import select_audio, read_json
@@ -23,24 +23,34 @@ def nfac():
 @app.route('/api', methods=['POST'])
 def api():
     print(f"Received: {json.dumps(dict(request.form), indent=2)}")
+    client_request = dict(request.form)
     if request.form['type'] == "style":
         # Initialize new ID?
+        Exp.server_id = str(datetime.timestamp(datetime.now()))
+        Exp.read({'id': Exp.server_id})
         return jsonify(read_json("static/colors.json"))
     elif request.form['type'] == "start":
-        Exp.start(request.form)
+        client_request['id'] = Exp.server_id
+        Exp.start(client_request)
     elif request.form['type'] == "trial":
-        Exp.trial(request.form)
+        client_request['id'] = Exp.server_id
+        Exp.trial(client_request)
     elif request.form['type'] == "answer":
-        print(dict(request.form))
-        Exp.trial(request.form)
+        client_request['id'] = Exp.server_id
+        print(client_request)
+        Exp.trial(client_request)
     elif request.form['type'] == "stop":
-        Exp.stop(request.form)
+        client_request['id'] = Exp.server_id
+        Exp.stop(client_request)
     elif request.form['type'] == "abort":
-        Exp.abort(request.form)
+        client_request['id'] = Exp.server_id
+        Exp.abort(client_request)
     elif request.form['type'] == "info":
-        Exp.info(request.form)
+        client_request['id'] = Exp.server_id
+        Exp.info(client_request)
+    Exp.dump(data=request.form, prefix='c')
     print(f"Sending: {json.dumps(Exp.response, indent=2)}")
-    # Exp.dump()
+    Exp.dump(prefix='s')
     return jsonify(Exp.response)
 
 
