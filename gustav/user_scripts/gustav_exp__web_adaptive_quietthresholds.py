@@ -2,13 +2,17 @@
 
 # A Gustav settings file!
 
-import os, sys
-import numpy as np
+import os
+import sys
 import time
+
+import psylab           # https://github.com/cbrown1/psylab
+import numpy as np
+import soundfile as sf
+
 import gustav
 from gustav.forms import web as theForm
-import psylab                              # https://github.com/cbrown1/psylab
-# import medussa as m                        # https://github.com/cbrown1/medussa
+
 
 def setup(exp):
     # setup gets called before the experiment begins
@@ -165,14 +169,22 @@ def pre_trial(exp):
     interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
     interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
 
+    # Q: Why is correct set randomly ???
     exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
     if exp.var.dynamic['correct'] == 1:
         exp.stim.out = np.hstack((interval_sig, isi, interval_noi))
     else:
         exp.stim.out = np.hstack((interval_noi, isi, interval_sig))
-
+    # Q: What should I be saving here ?
+    sf.write(filename1, interval_sig, exp.user.fs)
+    sf.write(filename2, interval_noi, exp.user.fs)
 
 def present_trial(exp):
+    """
+    Update interface with trial information.
+    """
+    exp.interface.present_trial()
+    # Probably should save json file here with output
     # time.sleep(.1)
     exp.interface.show_Notify_Left(False)    # Hide the 'press space' text since they just pressed it
     exp.interface.show_Notify_Right(True)    # Show the listen text
@@ -182,7 +194,6 @@ def present_trial(exp):
     # s.play()
     for i in range(len(exp.interface.alternatives)):
         # Generate audio files here
-
         # exp.interface.set_border(i, 'Heavy', redraw=True)
         # time.sleep(exp.user.interval/1000.)
         # exp.interface.set_border(i, 'Light', redraw=True)
