@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 
-from tools import select_audio, read_json
 from experiment import Experiment
 
 
@@ -25,10 +24,9 @@ def api():
     print(f"Received: {json.dumps(dict(request.form), indent=2)}")
     client_request = dict(request.form)
     if request.form['type'] == "style":
-        # Initialize new ID?
+        # Initialize new ID and return styling information
         Exp.server_id = str(datetime.timestamp(datetime.now()))
-        Exp.read({'id': Exp.server_id})
-        return jsonify(read_json("static/colors.json"))
+        Exp.initialize({'id': Exp.server_id})
     elif request.form['type'] == "start":
         client_request['id'] = Exp.server_id
         Exp.start(client_request)
