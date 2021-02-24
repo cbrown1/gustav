@@ -10,7 +10,7 @@ import numpy as np
 import soundfile as sf
 
 import psylab
-# import medussa
+
 
 def select_audio(frequency1=1200, frequency2=2000):
     # audio_files = os.listdir("static/audio")
