@@ -134,8 +134,8 @@ def setup(exp):
         Add any additional variables you need here
     '''
     exp.user.fs = 44100
-    exp.user.isi = 250 # ms
-    exp.user.interval = 500
+    exp.user.isi = 250       # wait duration between audio files (ms)
+    exp.user.interval = 500  # duration of 1 audio file (ms)
 
 """CUSTOM PROMPT
     If you want a custom response prompt, define a function for it
@@ -144,12 +144,16 @@ def setup(exp):
     run.pylab_is_go to False
 """
 def prompt_response(exp):
+    """
+    Wait for input from the client.
+    Check user specific directory for a new input.
+    """
     while True:
-        ret = exp.interface.get_resp()
-        if ret in exp.validKeys:
-            exp.run.response = ret
+        ret, response = exp.interface.get_resp()
+        if ret:
+            exp.run.response = response
             break
-        elif ret in exp.quitKeys:
+        else:
             exp.run.block_on = False
             exp.run.gustav_is_go = False
             exp.var.dynamic['msg'] = "Cancelled by user"
@@ -172,8 +176,10 @@ def pre_trial(exp):
     # Q: Why is correct set randomly ???
     exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
     if exp.var.dynamic['correct'] == 1:
+        # If the correct answer is 1 send the signal first
         exp.stim.out = np.hstack((interval_sig, isi, interval_noi))
     else:
+        # Else send the 'silence' first
         exp.stim.out = np.hstack((interval_noi, isi, interval_sig))
     # Q: What should I be saving here ?
     sf.write(filename1, interval_sig, exp.user.fs)
@@ -183,59 +189,50 @@ def present_trial(exp):
     """
     Update interface with trial information.
     """
-    exp.interface.present_trial()
     # Probably should save json file here with output
-    # time.sleep(.1)
-    exp.interface.show_Notify_Left(False)    # Hide the 'press space' text since they just pressed it
-    exp.interface.show_Notify_Right(True)    # Show the listen text
-    exp.interface.show_Prompt(False)         # Don't show prompt during presentation b/c we don't want a response
-    exp.interface.show_Buttons(True)         # Show buttons so user gets visual feedback on interfal playback
-    # s = exp.audiodev.open_array(exp.stim.out,exp.user.fs)
-    # s.play()
-    for i in range(len(exp.interface.alternatives)):
-        # Generate audio files here
-        # exp.interface.set_border(i, 'Heavy', redraw=True)
-        # time.sleep(exp.user.interval/1000.)
-        # exp.interface.set_border(i, 'Light', redraw=True)
-        # time.sleep(exp.user.isi/1000.)
-    exp.interface.show_Notify_Right(False)
-    exp.interface.show_Prompt(True, redraw=True)
-    exp.interface.update()
-
+    exp.interface.present_trial()
 
 def post_trial(exp):
     # Updates the buttons according to correct answer
     # this is handled on the server side
-    pass
-    # if exp.run.gustav_is_go:
-    #     if str(exp.var.dynamic['correct']).lower() == exp.run.response.lower():
-    #         color = 'Green'
-    #     else:
-    #         color = 'Red'
-    #     for i in range(3):
-    #         exp.interface.set_color(exp.var.dynamic['correct']-1, color, redraw=True)
-    #         time.sleep(.1)
-    #         exp.interface.set_color(exp.var.dynamic['correct']-1, 'None', redraw=True)
-    #         time.sleep(.05)
+    if exp.run.gustav_is_go:
+        correct = False
+        if str(exp.var.dynamic['correct']).lower() == exp.run.response.lower():
+            correct = True
+        print(f'Gustav is go, post trial, answer correct: {correct}')
 
 def pre_exp(exp):
-    # exp.audiodev = m.open_device()
+    # Only runs once before the whole thing
     exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","))
-    exp.interface.update_Title_Center(exp.note)
-    exp.interface.update_Title_Right("Subject {:}".format(exp.subjID) )
-    exp.interface.show_Buttons(False)
-    exp.interface.show_Notify_Left(False)
-    exp.interface.update_Notify_Right("Listen", show=False)
-    exp.interface.update_Prompt("Press any key to begin", show=True, redraw=True)
-    # Wait for a keypress
-    ret = exp.interface.get_resp()
-    exp.interface.update_Prompt("Which Interval?", show=False, redraw=True)
-
+    # Setup styling here (see style.json for more)
+    exp.interface.style["--background_color"] = "#232323"
+    exp.interface.style["--button_size"] = "85px"
+    exp.interface.style["--button-border"] = "1px"
+    exp.interface.style["--button-border-playing"] = "5px"
+    # Save styling information for the server
+    exp.interface.dump_style()
+    # Wait for initial client input
+    # This will trigger if the main page is loaded in a browser
+    # That's why the max timeout is larger than the default
+    ret = exp.interface.get_resp_pre_exp(max_timeout=3000)
+    if not ret:
+        exp.run.block_on = False
+        exp.run.gustav_is_go = False
+        exp.var.dynamic['msg'] = "Cancelled by user"
+    else:
+        exp.subjID = ret['id']
+        exp.interface.update_Title_Center(exp.note)
+        exp.interface.update_Title_Right("Subject {:}".format(exp.subjID) )
+        exp.interface.update_Prompt("Press any key to begin")
+        exp.interface.update_Notify_Right("Listen")
+        ret = exp.interface.get_resp()
+        exp.interface.update_Prompt("Which Interval?", show=False, redraw=True)
 
 def post_exp(exp):
     exp.interface.destroy()
 
 def pre_block(exp):
+    # Runs once before every block of trials (4 blocks in this case because of 4 frequencies)
     exp.interface.update_Status_Center("Block {:} of {:}".format(exp.run.block+1, exp.var.nblocks+1))
 
 if __name__ == '__main__':

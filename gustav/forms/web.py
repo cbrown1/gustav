@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import requests
+from datetime import datetime
 
 
 class Interface():
@@ -32,6 +33,27 @@ class Interface():
         except:
             self.destroy()
             raise Exception('Error getting input')
+
+    def get_resp_pre_exp(self, sleep=0.1, max_timeout=300):
+        new_subject_found = False
+        now = datetime.now()
+        timeout = 0
+        while now new_subject_found:
+            subjects = os.listdir(self.dir)
+            for sbj in subjects:
+                try:
+                    sbj_date = datetime.fromtimestamp(int(sbj))
+                    if sbj_date > now:
+                        print('New subject found')
+                        self.id = sbj
+                        break
+                except:
+                    print("Cannot parse subject id: sbj")
+            time.sleep(sleep)
+            timeout += sleep
+            if timeout > max_timeout:
+                self.id = False
+        return self.id
 
     def read(self, data):
         self.id = data['id']
@@ -72,7 +94,7 @@ class Interface():
         print('abort' + '-' * 30 + f'\n{self}')
 
     def present_trial(self):
-
+        pass
 
     def trial(self, data):
         self.read(data)
@@ -119,11 +141,11 @@ class Interface():
         self.response = output
         print('stop' + '-' * 30 + f'\n{self}')
 
-    def info(self, data):
+    def pre_exp(self, data):
         self.read(data)
         output = {
           "type": "info",
-          "message": "n-AFC Experiment | Quiet Thresholds"
+          "message": self.title_c_str
         }
         self.response = output
         print('info' + '-' * 30 + f'\n{self}')
@@ -134,6 +156,15 @@ class Interface():
             data = self.response
         if filename is None:
             filename = os.path.join(self.dir, f"{self.response['type']}_{self.num_trial}.json")
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2)
+        print(f'dump -> {filename}')
+
+    def dump_style(self, style=None):
+        """Dump data to json file"""
+        if style is None:
+            style = self.style
+        filename = os.path.join(self.root, "colors.json")
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
         print(f'dump -> {filename}')
