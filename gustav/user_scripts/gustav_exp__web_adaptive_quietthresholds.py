@@ -6,15 +6,16 @@ import os
 import sys
 import time
 
-import psylab           # https://github.com/cbrown1/psylab
+# import psylab           # https://github.com/cbrown1/psylab
 import numpy as np
-import soundfile as sf
+# import soundfile as sf
 
 import gustav
 from gustav.forms import web as theForm
 
 
 def setup(exp):
+    print(f'SETUP')
     # setup gets called before the experiment begins
 
     # General Experimental Variables
@@ -87,6 +88,7 @@ def setup(exp):
                                     '1000',
                                   ]
     def step(exp):
+        print(f'STEP')
         # A custom step function for adaptive tracking. This is actually the same as the default one, here for demo purposes
         exp.var.dynamic['value'] += exp.var.dynamic['cur_step'] * exp.var.dynamic['steps'][exp.var.dynamic['n_reversals']]
         exp.var.dynamic['value'] = max(exp.var.dynamic['value'], exp.var.dynamic['val_floor'])
@@ -148,10 +150,12 @@ def prompt_response(exp):
     Wait for input from the client.
     Check user specific directory for a new input.
     """
+    print('PROMPT RESPONSE')
     while True:
-        ret, response = exp.interface.get_resp()
+        ret = exp.interface.get_resp()
         if ret:
-            exp.run.response = response
+            # Q: What should be the response, does it matter?
+            exp.run.response = ret
             break
         else:
             exp.run.block_on = False
@@ -166,35 +170,38 @@ def pre_trial(exp):
         available. For the current level of a variable, use
         var.current['varname'].
     """
-    exp.interface.update_Status_Right("Trial {:}".format(exp.run.trials_block), redraw=True)
-    isi = np.zeros(int(psylab.signal.ms2samp(int(exp.user.isi),int(exp.user.fs))))
-    interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
-    interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
-    interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
-    interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
-
-    # Q: Why is correct set randomly ???
-    exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
-    if exp.var.dynamic['correct'] == 1:
-        # If the correct answer is 1 send the signal first
-        exp.stim.out = np.hstack((interval_sig, isi, interval_noi))
-    else:
-        # Else send the 'silence' first
-        exp.stim.out = np.hstack((interval_noi, isi, interval_sig))
-    # Q: What should I be saving here ?
-    sf.write(filename1, interval_sig, exp.user.fs)
-    sf.write(filename2, interval_noi, exp.user.fs)
+    print(f'PRE TRIAL {exp.run.trials_block}')
+    exp.interface.update_Status_Right("Trial {:}".format(exp.run.trials_block))
+    # isi = np.zeros(int(psylab.signal.ms2samp(int(exp.user.isi),int(exp.user.fs))))
+    # interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
+    # interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
+    # interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
+    # interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
+    #
+    # # Q: Why is correct set randomly ???
+    # exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
+    # if exp.var.dynamic['correct'] == 1:
+    #     # If the correct answer is 1 send the signal first
+    #     exp.stim.out = np.hstack((interval_sig, isi, interval_noi))
+    # else:
+    #     # Else send the 'silence' first
+    #     exp.stim.out = np.hstack((interval_noi, isi, interval_sig))
+    # # Q: What should I be saving here ?
+    # sf.write(filename1, interval_sig, exp.user.fs)
+    # sf.write(filename2, interval_noi, exp.user.fs)
 
 def present_trial(exp):
     """
     Update interface with trial information.
     """
+    print('PRESENT TRIAL')
     # Probably should save json file here with output
     exp.interface.present_trial()
 
 def post_trial(exp):
     # Updates the buttons according to correct answer
     # this is handled on the server side
+    print('POST TRIAL')
     if exp.run.gustav_is_go:
         correct = False
         if str(exp.var.dynamic['correct']).lower() == exp.run.response.lower():
@@ -202,6 +209,7 @@ def post_trial(exp):
         print(f'Gustav is go, post trial, answer correct: {correct}')
 
 def pre_exp(exp):
+    print('PRE EXP')
     # Only runs once before the whole thing
     exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","))
     # Setup styling here (see style.json for more)
@@ -209,6 +217,9 @@ def pre_exp(exp):
     exp.interface.style["--button_size"] = "85px"
     exp.interface.style["--button-border"] = "1px"
     exp.interface.style["--button-border-playing"] = "5px"
+    exp.interface.style["message"] = "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment."
+    exp.interface.style["message"] = f"<code>{exp.subjID} testing...</code>"
+    exp.interface.style['logo'] = 'static/index.svg'
     # Save styling information for the server
     exp.interface.dump_style()
     # Wait for initial client input
@@ -226,12 +237,14 @@ def pre_exp(exp):
         exp.interface.update_Prompt("Press any key to begin")
         exp.interface.update_Notify_Right("Listen")
         ret = exp.interface.get_resp()
-        exp.interface.update_Prompt("Which Interval?", show=False, redraw=True)
+        exp.interface.update_Prompt("Which Interval?")
 
 def post_exp(exp):
+    print('POST EXP')
     exp.interface.destroy()
 
 def pre_block(exp):
+    print(f'PRE BLOCK {exp.run.block}')
     # Runs once before every block of trials (4 blocks in this case because of 4 frequencies)
     exp.interface.update_Status_Center("Block {:} of {:}".format(exp.run.block+1, exp.var.nblocks+1))
 

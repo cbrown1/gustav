@@ -33,6 +33,7 @@ def api():
     Exp.send_request(client_request)
     # Get gustav response
     response = Exp.get_response()
+    # response = Exp.style
     print(f"Sending: {json.dumps(response, indent=2)}")
     return jsonify(response)
 
