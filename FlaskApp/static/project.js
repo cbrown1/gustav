@@ -11,14 +11,6 @@ var abortBtn = function (){
 // Get styling information from the server
 var mainColors = function (){
     let serverResponse = $.post(apiUrl, {'type': 'style'});
-    // let responseJSON = serverResponse.responseJSON;
-    // $.each( responseJSON, function(key, val ) {
-    //     if (key == "loading_bars"){
-    //         $("body").addClass("loading_bars-"+val);
-    //     }else{
-    //         document.documentElement.style.setProperty(key, val);
-    //     }
-    // });
     serverResponse.done(function( data ) {
         $(".logoArea img").attr("src",data.logo);
         $("#welcome .contextArea p").html(data.message);
@@ -39,15 +31,6 @@ var getID = function(){
         sessionStorage.setItem("userid", currentTime + parseInt(Math.random(1111,999999) * 10000));
     }
     return sessionStorage.getItem("userid")
-}
-var startText = function (){
-    let formdata = {'type': 'start', 'id': getID()}
-    let serverResponse = $.post(apiUrl, formdata);
-    serverResponse.done(function( data ) {
-        $(".logoArea img").attr("src",data.logo);
-        $("#welcome .contextArea p").html(data.message);
-        $("#agreeBtn").html(data.accept_btn);
-    });
 }
 var checkWelcomeButtons = function (btn = false){
     var changeArea = function (){
@@ -327,6 +310,5 @@ var infoBtnCheck=function (){
 $(document).ready(function (){
     mainColors();
     startPage();
-    // startText();
     kvkkAreaCheck();
 });
