@@ -11,13 +11,25 @@ var abortBtn = function (){
 // Get styling information from the server
 var mainColors = function (){
     let serverResponse = $.post(apiUrl, {'type': 'style'});
-    let responseJSON = serverResponse.responseJSON;
-    $.each( responseJSON, function(key, val ) {
-        if (key == "loading_bars"){
-            $("body").addClass("loading_bars-"+val);
-        }else{
-            document.documentElement.style.setProperty(key, val);
-        }
+    // let responseJSON = serverResponse.responseJSON;
+    // $.each( responseJSON, function(key, val ) {
+    //     if (key == "loading_bars"){
+    //         $("body").addClass("loading_bars-"+val);
+    //     }else{
+    //         document.documentElement.style.setProperty(key, val);
+    //     }
+    // });
+    serverResponse.done(function( data ) {
+        $(".logoArea img").attr("src",data.logo);
+        $("#welcome .contextArea p").html(data.message);
+        $("#agreeBtn").html(data.accept_btn);
+        $.each( serverResponse.responseJSON, function(key, val ) {
+            if (key == "loading_bars"){
+                $("body").addClass("loading_bars-"+val);
+            }else{
+                document.documentElement.style.setProperty(key, val);
+            }
+        });
     });
 }
 // Get session id
@@ -315,6 +327,6 @@ var infoBtnCheck=function (){
 $(document).ready(function (){
     mainColors();
     startPage();
-    startText();
+    // startText();
     kvkkAreaCheck();
 });
