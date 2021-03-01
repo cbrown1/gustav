@@ -27,9 +27,6 @@ def api():
         # Initialize new ID and return styling information
         Exp.server_id = str(datetime.timestamp(datetime.now()))
         Exp.initialize({'id': Exp.server_id})
-    elif request.form['type'] == "start":
-        client_request['id'] = Exp.server_id
-        Exp.start(client_request)
     elif request.form['type'] == "trial":
         client_request['id'] = Exp.server_id
         Exp.trial(client_request)

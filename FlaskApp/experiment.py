@@ -33,42 +33,43 @@ class Experiment(object):
         """
         Get response from gustav.
         """
+        print(f"send_request: {data}")
         self.read(data)
         self.request = data
         self.response = data
         if not hasattr(self, 'id'):
             print('WARNING: No subject id available, skipping')
         else:
-            self.expected_response = os.path.join(self.dir, f"g{self.id}_{self.num_trial}_{data['type']}.json")
+            self.expected_response = os.path.join(self.dir, f"g{self.num_trial}_{data['type']}.json")
             data['response_file'] = self.expected_response
             self.dump(data=data, prefix='c')
 
-    def get_response(self, sleep=0.1, max_timeout=300):
+    def get_response(self, sleep=0.1, max_timeout=10):
         """
         Get response from gustav.
         """
         print(f'Waiting for response: {self.expected_response}')
         timeout = 0
-        while not os.path.exists(expected_out) or timeout <= max_timeout:
+        while not os.path.exists(self.expected_response) and timeout <= max_timeout:
             time.sleep(sleep)
             timeout += sleep
+            print(f"waiting {timeout} < {max_timeout}")
         if timeout <= max_timeout:
-            self.response = self.load(expected_out)
+            self.response = self.load(self.expected_response)
+            print(f"got reponse: {self.response}")
         else:
             print(f'Max timeout ({max_timeout} s) reached, no response!')
             self.response = {}
         return self.response
 
-    def start(self, data):
-        self.num_trial = 0
+    def initialize(self, data):
         self.read(data)
         self.abort(data, keep_dir=False)
         os.makedirs(self.dir)
-        output = {'type': 'start',
-                  'message': "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment.",
-                  'logo': 'static/index.svg'}
-        self.response = output
-        print('start' + '-' * 30 + f'\n{self}')
+        self.num_trial = 0
+        self.response = read_json("static/style.json")
+        self.style = read_json("static/style.json")
+        print('initialize' + '-' * 30 + f'\n{self}')
 
     def abort(self, data, keep_dir=True):
         self.read(data)
@@ -140,10 +141,6 @@ class Experiment(object):
         }
         self.response = output
         print('info' + '-' * 30 + f'\n{self}')
-
-    def initialize(self, data):
-        self.read(data)
-        self.response = read_json("static/colors.json")
 
     def dump(self, data=None, filename=None, prefix='', suffix=''):
         """Dump data to json file"""
