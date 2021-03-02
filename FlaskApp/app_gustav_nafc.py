@@ -25,6 +25,7 @@ def api():
         Exp.server_id = str(datetime.timestamp(datetime.now()))
         Exp.initialize({'id': Exp.server_id})
         client_request['id'] = Exp.server_id
+        return jsonify(Exp.style)
     else:
         if not hasattr(Exp, 'id'):
             return jsonify({})
@@ -39,4 +40,4 @@ def api():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=5050)

@@ -53,7 +53,7 @@ class Experiment(object):
         while not os.path.exists(self.expected_response) and timeout <= max_timeout:
             time.sleep(sleep)
             timeout += sleep
-            print(f"waiting {timeout} < {max_timeout}")
+            # print(f"waiting {timeout} < {max_timeout}")
         if timeout <= max_timeout:
             self.response = self.load(self.expected_response)
             print(f"got reponse: {self.response}")

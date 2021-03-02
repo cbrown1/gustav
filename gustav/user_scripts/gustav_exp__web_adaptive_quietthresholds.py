@@ -6,9 +6,9 @@ import os
 import sys
 import time
 
-# import psylab           # https://github.com/cbrown1/psylab
+import psylab           # https://github.com/cbrown1/psylab
 import numpy as np
-# import soundfile as sf
+import soundfile as sf
 
 import gustav
 from gustav.forms import web as theForm
@@ -22,7 +22,7 @@ def setup(exp):
     exp.name = '_quiet_thresholds_'     # Experiment name. Accessible as $name when logging or recording data
     exp.method = 'adaptive'             # 'constant' for constant stimuli, or 'adaptive' for a staircase procedure (SRT, etc)
     exp.prompt = 'Which interval?'      # A prompt for subject
-    exp.frontend = 'tk'                 # The frontend to use when interacting with subject or experimenter. Can be 'term', 'tk', or 'qt' (pyqt4)
+    exp.frontend = 'term'               # The frontend to use when interacting with subject or experimenter. Can be 'term', 'tk', or 'qt' (pyqt4)
     exp.logFile = './$name_$date.log'   # The path to the logfile
     exp.logConsole = True               # Whether to direct log info to the console
     exp.logConsoleDelay = True          # When using a curses form, the console is not available. Set to True to delay print until end of exp when curses form is destroyed.
@@ -78,8 +78,6 @@ def setup(exp):
             stim['masker'] += masker
         stim['masker'] = stim['masker'][0:stim['masker_samples_needed']]
     """
-    # TODO: for python 2.7, change these to ordered dicts, where name is the key
-    # and the dict {type, levels} is the val
 
     exp.var.factorial['frequency']= [
                                     '125',
@@ -173,22 +171,26 @@ def pre_trial(exp):
     print(f'PRE TRIAL {exp.run.trials_block}')
     exp.interface.update_Status_Right("Trial {:}".format(exp.run.trials_block))
     # isi = np.zeros(int(psylab.signal.ms2samp(int(exp.user.isi),int(exp.user.fs))))
-    # interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
-    # interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
-    # interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
-    # interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
-    #
-    # # Q: Why is correct set randomly ???
-    # exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
-    # if exp.var.dynamic['correct'] == 1:
-    #     # If the correct answer is 1 send the signal first
-    #     exp.stim.out = np.hstack((interval_sig, isi, interval_noi))
-    # else:
-    #     # Else send the 'silence' first
-    #     exp.stim.out = np.hstack((interval_noi, isi, interval_sig))
-    # # Q: What should I be saving here ?
-    # sf.write(filename1, interval_sig, exp.user.fs)
-    # sf.write(filename2, interval_noi, exp.user.fs)
+    interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
+    interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
+    interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
+    interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
+
+    # Select correct answer randomly
+    exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
+    if exp.var.dynamic['correct'] == 1:
+        # If the correct answer is 1 send the signal first
+        audio = [interval_sig, interval_noi]
+    else:
+        # Else send the 'silence' first
+        audio = [interval_noi, interval_sig]
+
+    exp.interface.audio = []
+    for i, a in enumerate(audio, start=1):
+        fname = os.path.join(exp.interface.subjDir, f'{exp.run.trials_block}_{i}.wav')
+        sf.write(fname, a, exp.user.fs)
+        client_fname = f'static/exp/{exp.subjID}/{exp.run.trials_block}_{i}.wav'
+        exp.interface.audio.append({'name': i, 'file': client_fname, 'id': i})
 
 def present_trial(exp):
     """
@@ -196,15 +198,17 @@ def present_trial(exp):
     """
     print('PRESENT TRIAL')
     # Probably should save json file here with output
-    exp.interface.present_trial()
+    exp.interface.present_trial(exp)
+    # print(f'Return: {ret}')
 
 def post_trial(exp):
     # Updates the buttons according to correct answer
     # this is handled on the server side
     print('POST TRIAL')
+    ret = exp.interface.get_resp('answer')
     if exp.run.gustav_is_go:
         correct = False
-        if str(exp.var.dynamic['correct']).lower() == exp.run.response.lower():
+        if str(exp.var.dynamic['correct']).lower() == int(ret['answer']):
             correct = True
         print(f'Gustav is go, post trial, answer correct: {correct}')
 
@@ -217,7 +221,7 @@ def pre_exp(exp):
     exp.interface.style["--button_size"] = "85px"
     exp.interface.style["--button-border"] = "1px"
     exp.interface.style["--button-border-playing"] = "5px"
-    exp.interface.style["message"] = "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment."
+    # exp.interface.style["message"] = "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment."
     exp.interface.style["message"] = f"<code>{exp.subjID} testing...</code>"
     exp.interface.style['logo'] = 'static/index.svg'
     # Save styling information for the server
@@ -238,6 +242,13 @@ def pre_exp(exp):
         exp.interface.update_Notify_Right("Listen")
         ret = exp.interface.get_resp()
         exp.interface.update_Prompt("Which Interval?")
+
+    # Wait for info call
+    # ret = exp.interface.get_resp(resp_type='info')
+    # "static/exp/1614662525.538388/g0_info.json"
+    fname = os.path.join(exp.interface.subjDir, ret['response_file'].split('/')[-1])
+    exp.interface.info(fname)
+
 
 def post_exp(exp):
     print('POST EXP')

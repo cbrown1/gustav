@@ -10,7 +10,8 @@ class Interface():
     def __init__(self, alternatives=2, prompt='Choose an alternative'):
         self.prompt = prompt
         self.alternatives = alternatives
-        style_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'style.json')
+        self.filedir = os.path.dirname(os.path.abspath(__file__))
+        style_file = os.path.join(self.filedir, 'style.json')
         with open(style_file) as f:
             self.style = json.load(f)
         self.dir = '../../FlaskApp/static/exp'
@@ -22,46 +23,104 @@ class Interface():
     def __repr__(self):
         return f"Psylab experiment\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}\n  Sessions: {len(self.sessions)}"
 
-    def get_resp(self, sleep=0.1, max_timeout=300):
+    def get_resp(self, resp_type=None, sleep=0.1, max_timeout=300):
         try:
             waiting = True
             timeout_start = time.time()
             out_dir = os.path.join(self.dir, self.id)
-            print(f'Get resp waiting: {out_dir}')
+            print(f'Get resp waiting: {out_dir}', '' if resp_type is None else f' expected type: {resp_type}')
+            checked = []
             while waiting:
                 outs = os.listdir(out_dir)
                 for out in outs:
-                    if out not in self.io:
+                    if out.split('.')[-1] == 'json' and out not in self.io and out not in checked:
                         print(f'Found new out: {out}')
                         filename = os.path.join(out_dir, out)
-                        self.io[out] = self.load(filename)
-                        waiting = False
-                        ret = self.io[out]
+                        resp = self.load(filename)
+                        if resp_type is None:
+                            print('No type selected, read type: ', resp['type'] if 'type' in resp else None)
+                            waiting = False
+                            self.io[out] = resp
+                            ret = self.io[out]
+                        else:
+                            if resp['type'] == resp_type:
+                                print(f'Out correct type: {resp_type} : {out}')
+                                waiting = False
+                                self.io[out] = resp
+                                ret = self.io[out]
+                            else:
+                                print(f'Out not expected: {out} is not type {resp_type}')
+                                checked.append(out)
             return ret
         except:
             self.destroy()
             raise Exception('Error getting input')
 
+    def parse_resp(self, resp):
+        if resp['type'] == 'info':
+            self.info()
+        elif resp['type'] == 'trial':
+            self.trial()
+        elif resp['type'] == 'answer':
+            self.trial()
+        elif resp['type'] == 'stop':
+            self.stop()
+        elif resp['type'] == 'abort':
+            self.abort()
+        elif resp['type'] == 'style':
+            self.dump_style()
+
     def get_resp_pre_exp(self, sleep=0.1, max_timeout=300):
         new_subject_found = False
         now = datetime.now()
         timeout = 0
+        checked = []
         while not new_subject_found:
             subjects = os.listdir(self.dir)
             for sbj in subjects:
-                try:
-                    sbj_date = datetime.fromtimestamp(float(sbj))
-                    if sbj_date > now:
-                        print(f'New subject found: {sbj}')
-                        self.id = sbj
-                        new_subject_found = True
-                except Exception as e:
-                    print(f"Cannot parse subject id: {sbj}\n{e}")
+                if sbj not in checked:
+                    try:
+                        sbj_date = datetime.fromtimestamp(float(sbj))
+                        if sbj_date > now:
+                            print(f'New subject found: {sbj}')
+                            self.id = sbj
+                            self.subjDir = os.path.join(self.dir, self.id)
+                            new_subject_found = True
+                    except Exception as e:
+                        print(f"Cannot parse subject id: {sbj}\n{e}")
+                        checked.append(sbj)
+                else:
+                    continue
             time.sleep(sleep)
             timeout += sleep
             if timeout > max_timeout:
                 self.id = False
         return {'id': self.id}
+
+    def present_trial(self, exp):
+        output = {
+                    'type': 'trial',
+                    'lower_left_text': 'Trial: {}'.format(exp.run.trials_block),
+                    'lower_right_text': self.status_r_str,
+                    'upper_left_text': 'Psylab n-AFC Experiment | Quiet Thresholds',
+                    'items': self.audio,
+                    'prompt1': 'Press space to listen',
+                    'prompt2': 'Select a sound (press 1 or 2)',
+                    'answer': exp.var.dynamic['correct'],
+                    'delay': exp.user.isi,
+                    'next_delay': 2000,
+                  }
+        filename = os.path.join(self.dir, self.id, f"g{exp.run.trials_block}_{output['type']}.json")
+        self.dump(output, filename)
+
+    def info(self, filename):
+        output = {
+          "type": "info",
+          "message": "testing info..."
+        }
+        print('info' + '-' * 30 + f'\n{output}')
+        self.dump(output, filename)
+        return output
 
     def read(self, data):
         self.id = data['id']
@@ -100,9 +159,6 @@ class Interface():
         self.response = output
         self.num_trial = 0
         print('abort' + '-' * 30 + f'\n{self}')
-
-    def present_trial(self):
-        pass
 
     def trial(self, data):
         self.read(data)
@@ -160,6 +216,7 @@ class Interface():
 
     def load(self, filename):
         """Load data from json file"""
+        # data = requests.get(filename).json()
         with open(filename, 'r') as f:
             data = json.load(f)
         return data
@@ -169,7 +226,7 @@ class Interface():
         if data is None:
             data = self.response
         if filename is None:
-            filename = os.path.join(self.dir, f"{self.response['type']}_{self.num_trial}.json")
+            filename = os.path.join(self.dir, f"g{self.num_trial}_{self.response['type']}.json")
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
         print(f'dump -> {filename}')
@@ -289,17 +346,15 @@ class Interface():
         else:
             self.buttons_show = not self.buttons_show
 
-    def update_Status_Left(self, s, redraw=False):
+    def update_Status_Left(self, s):
         """Update the text on the left side of the status bar
 
             redraw is a bool specifying whether to redraw window.
             A window redraw can also be set with update.
         """
         self.status_l_str = s
-        if redraw:
-            self.redraw()
 
-    def update_Status_Right(self, s, redraw=False):
+    def update_Status_Right(self, s):
         """Update the text on the right side of the status bar
 
             redraw is a bool specifying whether to redraw window.
@@ -307,42 +362,34 @@ class Interface():
         """
         self.status_r_str = s
 
-    def update_Status_Center(self, s, redraw=False):
+    def update_Status_Center(self, s):
         """Update the text in the center of the status bar
 
             redraw is a bool specifying whether to redraw window.
             A window redraw can also be set with update.
         """
         self.status_c_str = s
-        if redraw:
-            self.redraw()
 
-    def update_Title_Left(self, s, redraw=False):
+    def update_Title_Left(self, s):
         """Update the text on the left side of the title bar
 
             redraw is a bool specifying whether to redraw window.
             A window redraw can also be set with update.
         """
         self.title_l_str = s
-        if redraw:
-            self.redraw()
 
-    def update_Title_Right(self, s, redraw=False):
+    def update_Title_Right(self, s):
         """Update the text on the right side of the title bar
 
             redraw is a bool specifying whether to redraw window.
             A window redraw can also be set with update.
         """
         self.title_r_str = s
-        if redraw:
-            self.redraw()
 
-    def update_Title_Center(self, s, redraw=False):
+    def update_Title_Center(self, s):
         """Update the text in the center of the title bar
 
             redraw is a bool specifying whether to redraw window.
             A window redraw can also be set with update.
         """
         self.title_c_str = s
-        if redraw:
-            self.redraw()
