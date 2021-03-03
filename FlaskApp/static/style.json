@@ -21,6 +21,6 @@
   "--button-played-background": "transparent",
   "--start-page-fs": "26px",
   "--corner-text-fs:": "16px",
-  "message": "<code>671 testing...</code>",
+  "message": "<code>123 testing...</code>",
   "logo": "static/index.svg"
 }

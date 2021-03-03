@@ -37,10 +37,15 @@ class Experiment(object):
         self.read(data)
         self.request = data
         self.response = data
+        if data['type'] == 'answer':
+            request_type = 'trial'
+            self.num_trial += 1
+        else:
+            request_type = data['type']
         if not hasattr(self, 'id'):
             print('WARNING: No subject id available, skipping')
         else:
-            self.expected_response = os.path.join(self.dir, f"g{self.num_trial}_{data['type']}.json")
+            self.expected_response = os.path.join(self.dir, f"g{self.num_trial}_{request_type}.json")
             data['response_file'] = self.expected_response
             self.dump(data=data, prefix='c')
 
