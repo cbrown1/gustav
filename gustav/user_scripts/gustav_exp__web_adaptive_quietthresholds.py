@@ -145,15 +145,17 @@ def setup(exp):
 """
 def prompt_response(exp):
     """
+    Only called after present_trial and before post_trial
+
     Wait for input from the client.
     Check user specific directory for a new input.
     """
     print('PROMPT RESPONSE')
     while True:
-        ret = exp.interface.get_resp()
+        ret = exp.interface.get_resp('answer')
         if ret:
             # Q: What should be the response, does it matter?
-            exp.run.response = ret
+            exp.run.response = ret['answer']
             break
         else:
             exp.run.block_on = False
@@ -187,7 +189,7 @@ def pre_trial(exp):
 
     exp.interface.audio = []
     for i, a in enumerate(audio, start=1):
-        fname = os.path.join(exp.interface.subjDir, f'{exp.run.trials_block}_{i}.wav')
+        fname = os.path.join(exp.interface.subjdir, f'{exp.run.trials_block}_{i}.wav')
         sf.write(fname, a, exp.user.fs)
         client_fname = f'static/exp/{exp.subjID}/{exp.run.trials_block}_{i}.wav'
         exp.interface.audio.append({'name': i, 'file': client_fname, 'id': i})
@@ -205,17 +207,17 @@ def post_trial(exp):
     # Updates the buttons according to correct answer
     # this is handled on the server side
     print('POST TRIAL')
-    ret = exp.interface.get_resp('answer')
+    # ret = exp.interface.get_resp('answer')
     if exp.run.gustav_is_go:
         correct = False
-        if str(exp.var.dynamic['correct']).lower() == int(ret['answer']):
+        if str(exp.var.dynamic['correct']).lower() == int(exp.run.response):
             correct = True
-        print(f'Gustav is go, post trial, answer correct: {correct}')
+        print(f'Got answer {exp.run.response}, correct: {correct}')
 
 def pre_exp(exp):
     print('PRE EXP')
     # Only runs once before the whole thing
-    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","))
+    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","), appdir="/home/kutay/Documents/git/gustav/FlaskApp")
     # Setup styling here (see style.json for more)
     exp.interface.style["--background_color"] = "#232323"
     exp.interface.style["--button_size"] = "85px"
@@ -236,19 +238,15 @@ def pre_exp(exp):
         exp.var.dynamic['msg'] = "Cancelled by user"
     else:
         exp.subjID = ret['id']
-        exp.interface.update_Title_Center(exp.note)
-        exp.interface.update_Title_Right("Subject {:}".format(exp.subjID) )
-        exp.interface.update_Prompt("Press any key to begin")
-        exp.interface.update_Notify_Right("Listen")
+        exp.interface.info = exp.note
+        exp.interface.upper_left_text = f"Subject {exp.subjID}"
+        exp.interface.prompt1 = "Press any key to begin"
+        exp.interface.prompt2 = "Which Interval?"
+        # exp.interface.update_Notify_Right("Listen")
+        # Wait for info call
         ret = exp.interface.get_resp()
-        exp.interface.update_Prompt("Which Interval?")
-
-    # Wait for info call
-    # ret = exp.interface.get_resp(resp_type='info')
-    # "static/exp/1614662525.538388/g0_info.json"
-    fname = os.path.join(exp.interface.subjDir, ret['response_file'].split('/')[-1])
-    exp.interface.info(fname)
-
+        fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
+        exp.interface.dump_info(fname)
 
 def post_exp(exp):
     print('POST EXP')
