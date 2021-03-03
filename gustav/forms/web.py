@@ -7,50 +7,69 @@ from datetime import datetime
 
 
 class Interface():
-    def __init__(self, alternatives=2, prompt='Choose an alternative'):
+    def __init__(self, alternatives=2, prompt='Choose an alternative', appdir=""):
         self.prompt = prompt
         self.alternatives = alternatives
         self.filedir = os.path.dirname(os.path.abspath(__file__))
         style_file = os.path.join(self.filedir, 'style.json')
         with open(style_file) as f:
             self.style = json.load(f)
-        self.dir = '../../FlaskApp/static/exp'
-        self.root = '../../FlaskApp/static'
-        self.out_dir = 'exp'
+        self.appdir = appdir
+        self.staticdir = os.path.join(self.appdir, 'static')
+        self.expdir = os.path.join(self.appdir, 'static', 'exp')
         self.sessions = {}
         self.io = {}
 
+        self.info = ''
+        self.upper_left_text = ''
+        self.lower_left_text = ''
+        self.lower_right_text = ''
+
+        self.checked = []
+
     def __repr__(self):
-        return f"Psylab experiment\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}\n  Sessions: {len(self.sessions)}"
+        return f"Gustav web interface\n  ID: {self.id}"
 
     def get_resp(self, resp_type=None, sleep=0.1, max_timeout=300):
         try:
             waiting = True
+            max_load_attempts = 3
+            load_attempt = 0
             timeout_start = time.time()
-            out_dir = os.path.join(self.dir, self.id)
+            out_dir = os.path.join(self.expdir, self.id)
             print(f'Get resp waiting: {out_dir}', '' if resp_type is None else f' expected type: {resp_type}')
-            checked = []
+            # checked = []
             while waiting:
                 outs = os.listdir(out_dir)
                 for out in outs:
-                    if out.split('.')[-1] == 'json' and out not in self.io and out not in checked:
+                    if out.startswith('c') and out.split('.')[-1] == 'json' and out not in self.io and out not in self.checked:
                         print(f'Found new out: {out}')
                         filename = os.path.join(out_dir, out)
-                        resp = self.load(filename)
-                        if resp_type is None:
-                            print('No type selected, read type: ', resp['type'] if 'type' in resp else None)
-                            waiting = False
-                            self.io[out] = resp
-                            ret = self.io[out]
-                        else:
-                            if resp['type'] == resp_type:
-                                print(f'Out correct type: {resp_type} : {out}')
+                        try:
+                            resp = self.load(filename)
+                            if resp_type is None:
+                                print('No type selected, read type: ', resp['type'] if 'type' in resp else None)
                                 waiting = False
                                 self.io[out] = resp
                                 ret = self.io[out]
                             else:
-                                print(f'Out not expected: {out} is not type {resp_type}')
-                                checked.append(out)
+                                if resp['type'] == resp_type:
+                                    print(f'Out correct type: {resp_type} : {out}')
+                                    waiting = False
+                                    self.io[out] = resp
+                                    ret = self.io[out]
+                                else:
+                                    print(f'Out not expected: {out} is not type {resp_type}')
+                                    self.checked.append(out)
+                        except:
+                            load_attempt += 1
+                            print(f'Could not load file, attempt: {load_attempt}')
+                            time.sleep(sleep)
+                        if load_attempt >= max_load_attempts:
+                            print('Reached max load attempts: {max_load_attempts}, ignoring out')
+                            self.checked.append(out)
+                            load_attempt = 0
+
             return ret
         except:
             self.destroy()
@@ -76,7 +95,7 @@ class Interface():
         timeout = 0
         checked = []
         while not new_subject_found:
-            subjects = os.listdir(self.dir)
+            subjects = os.listdir(self.expdir)
             for sbj in subjects:
                 if sbj not in checked:
                     try:
@@ -84,7 +103,7 @@ class Interface():
                         if sbj_date > now:
                             print(f'New subject found: {sbj}')
                             self.id = sbj
-                            self.subjDir = os.path.join(self.dir, self.id)
+                            self.subjdir = os.path.join(self.expdir, self.id)
                             new_subject_found = True
                     except Exception as e:
                         print(f"Cannot parse subject id: {sbj}\n{e}")
@@ -98,60 +117,41 @@ class Interface():
         return {'id': self.id}
 
     def present_trial(self, exp):
+        self.lower_left_text = 'Trial: {}'.format(exp.run.trials_block)
+        self.lower_right_text = f"Block {exp.run.block+1} of {exp.var.nblocks+1}"
         output = {
                     'type': 'trial',
-                    'lower_left_text': 'Trial: {}'.format(exp.run.trials_block),
-                    'lower_right_text': self.status_r_str,
-                    'upper_left_text': 'Psylab n-AFC Experiment | Quiet Thresholds',
+                    'lower_left_text': self.lower_left_text,
+                    'lower_right_text': self.lower_right_text,
+                    'upper_left_text': self.upper_left_text,
                     'items': self.audio,
-                    'prompt1': 'Press space to listen',
-                    'prompt2': 'Select a sound (press 1 or 2)',
+                    'prompt1': self.prompt1,
+                    'prompt2': self.prompt2,
                     'answer': exp.var.dynamic['correct'],
                     'delay': exp.user.isi,
-                    'next_delay': 2000,
+                    'next_delay': 2000
                   }
-        filename = os.path.join(self.dir, self.id, f"g{exp.run.trials_block}_{output['type']}.json")
+        filename = os.path.join(self.expdir, self.id, f"g{exp.run.trials_block}_trial.json")
         self.dump(output, filename)
 
-    def info(self, filename):
+    def dump_info(self, filename):
         output = {
           "type": "info",
-          "message": "testing info..."
+          "message": self.info
         }
         print('info' + '-' * 30 + f'\n{output}')
         self.dump(output, filename)
         return output
 
-    def read(self, data):
-        self.id = data['id']
-        self.dir = os.path.join(self.root, self.out_dir, str(data['id']))
-        if self.id not in self.sessions:
-            self.sessions[self.id] = {'id': self.id, 'dir': self.dir, 'trial': self.num_trial}
-        else:
-            self.sessions[self.id] = {**data, **self.sessions[self.id]}
-        self.ses = self.sessions[self.id]
-        print(self)
-
-    def start(self, data):
-        self.num_trial = 0
-        self.read(data)
-        self.abort(data, keep_dir=False)
-        os.makedirs(self.dir)
-        output = {'type': 'start',
-                  'message': "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment.",
-                  'logo': 'static/index.svg'}
-        self.response = output
-        print('start' + '-' * 30 + f'\n{self}')
-
     def abort(self, data, keep_dir=True):
         self.read(data)
-        if os.path.exists(self.dir):
+        if os.path.exists(self.subjdir):
             print('Session exists! Deleting...')
-            if len(os.listdir(self.dir)) > 1:
-                for f in os.listdir(self.dir):
-                    os.remove(os.path.join(self.dir, f))
+            if len(os.listdir(self.subjdir)) > 1:
+                for f in os.listdir(self.subjdir):
+                    os.remove(os.path.join(self.subjdir, f))
             if not keep_dir:
-                shutil.rmtree(self.dir)
+                shutil.rmtree(self.subjdir)
         output = {
             'type': 'abort',
             'message': "Experiment has been aborted."
@@ -226,7 +226,7 @@ class Interface():
         if data is None:
             data = self.response
         if filename is None:
-            filename = os.path.join(self.dir, f"g{self.num_trial}_{self.response['type']}.json")
+            filename = os.path.join(self.subjdir, f"g{self.num_trial}_{self.response['type']}.json")
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
         print(f'dump -> {filename}')
@@ -235,7 +235,7 @@ class Interface():
         """Dump data to json file"""
         if style is None:
             style = self.style
-        filename = os.path.join(self.root, "style.json")
+        filename = os.path.join(self.staticdir, "style.json")
         with open(filename, 'w') as f:
             json.dump(style, f, indent=2)
         print(f'dump -> {filename}')
