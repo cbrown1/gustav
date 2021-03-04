@@ -1,4 +1,6 @@
 var apiUrl = "/api";
+let expectedAnswer = 0;
+let userSelection = 0;
 var abortBtn = function (){
     $('.top-right').on("click",function() {
         var confirm = window.confirm("Are you sure you want to cancel the test?");
@@ -126,7 +128,7 @@ var infoArea = function (){
         getJsonApi({'type': 'info', 'id': getID()});
     }
 }
-var diasbleAllPlayButtons = function (){
+var disableAllPlayButtons = function (){
     var item = $("body>section#testArea.active");
     item.find("button").addClass("disabled");
 }
@@ -161,34 +163,34 @@ var playBtn = function (elem){
     if (notListened()){
 
         el.addClass("selectedBtn");
+        userSelection = el.data("id");
+        console.log("User selection:", userSelection)
 
-        if (el.data("id") == testArea.data("answer")){
+        if (el.data("id") == expectedAnswer){
             testArea.find("p.w-100.text-center").html("correct answer");
         }else{
             testArea.find("p.w-100.text-center").html("wrong answer");
         }
 
 
-        diasbleAllPlayButtons();
+        disableAllPlayButtons();
         testArea.find("button").each(function (){
-            if ($(this).data("id") == testArea.data("answer")){
+            if ($(this).data("id") == expectedAnswer){
                 $(this).addClass("success");
-                console.log("correct answer", testArea.data("answer"), $(this).data("id"));
             }else{
                 $(this).addClass("error");
-                console.log("wrong answer", testArea.data("answer"), $(this).data("id"));
             }
         })
         // Send user selection
         setTimeout(function (){
-            getJsonApi({'type': 'answer', 'id': getID(), answer:testArea.data("answer")});
+            getJsonApi({'type': 'answer', 'id': getID(), 'answer': userSelection});
         },testArea.data("next-delay"));
     }else{
         el.addClass("playing");
 
         testArea.find("p.w-100.text-center").html("Playing " + el.data("eq"));
 
-        diasbleAllPlayButtons();
+        disableAllPlayButtons();
         const audio = new Audio(el.data("sound"));
 
         audio.addEventListener("canplay",function(){
@@ -243,7 +245,8 @@ var getJsonApi = function (formdata = {'type': 'trial', 'id': getID()}){
                     var i = parseInt(key) +1;
                     items.push('<div><button type="button" onclick="playBtn(this);" data-eq="' + i + '" data-id="' + val.id + '" data-sound="' + val.file + '">' + val.name + '</button><span></span></div>');
                 });
-
+                expectedAnswer = data.answer;
+                console.log("Expected answer:", expectedAnswer);
                 $("body>section#testArea")
                     .html(items).attr("data-prompt2",data.prompt2)
                     .attr("data-delay",data.delay)

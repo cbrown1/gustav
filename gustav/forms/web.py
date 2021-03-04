@@ -5,6 +5,8 @@ import shutil
 import requests
 from datetime import datetime
 
+import numpy as np
+
 
 class Interface():
     def __init__(self, alternatives=2, prompt='Choose an alternative', appdir=""):
@@ -30,10 +32,9 @@ class Interface():
     def __repr__(self):
         return f"Gustav web interface\n  ID: {self.id}"
 
-    def get_resp(self, resp_type=None, sleep=0.1, max_timeout=300):
+    def get_resp(self, resp_type=None, sleep=0.1, max_timeout=300, max_load_attempts=3):
         try:
             waiting = True
-            max_load_attempts = 3
             load_attempt = 0
             timeout_start = time.time()
             out_dir = os.path.join(self.expdir, self.id)
@@ -47,6 +48,10 @@ class Interface():
                         filename = os.path.join(out_dir, out)
                         try:
                             resp = self.load(filename)
+                            if resp['type'] == 'abort':
+                                print('Aborting experiment')
+                                self.destroy()
+                                exit(1)
                             if resp_type is None:
                                 print('No type selected, read type: ', resp['type'] if 'type' in resp else None)
                                 waiting = False
@@ -129,9 +134,16 @@ class Interface():
                     'prompt2': self.prompt2,
                     'answer': exp.var.dynamic['correct'],
                     'delay': exp.user.isi,
-                    'next_delay': 2000
+                    'next_delay': 2000,
+                    'block': exp.run.block,
+                    'trial': exp.run.trials_block
                   }
-        filename = os.path.join(self.expdir, self.id, f"g{exp.run.trials_block}_trial.json")
+        last_answer = self.find_last_answer()
+        print(f'Last answer: {last_answer}')
+        if last_answer is not None:
+            filename = os.path.join(self.appdir, last_answer['response_file'])
+        else:
+            filename = os.path.join(self.expdir, self.id, f"g{exp.run.trials_block}_trial.json")
         self.dump(output, filename)
 
     def dump_info(self, filename):
@@ -160,41 +172,20 @@ class Interface():
         self.num_trial = 0
         print('abort' + '-' * 30 + f'\n{self}')
 
-    def trial(self, data):
-        self.read(data)
-        self.num_trial += 1
-        # Ask gustav for audio files
-        # For testing stop the experiment after 3 trials
-        if self.num_trial >= 5:
-            self.stop(data)
+    def find_last_answer(self):
+        """
+        Find last answer from client
+        Includes info about what the next response should be
+        """
+        answers = [i for i in self.io if 'answer' in i]
+        print(f'answers: {answers}')
+        if len(answers) > 0:
+            nanswers = [int(i.split('_')[0][1:]) for i in answers]
+            last_answer = self.io[answers[np.argsort(nanswers)[-1]]]
         else:
-            if 'answer' in data:
-                if data['answer'] == "1":
-                    self.freq1 += 200
-                    self.freq2 += 200
-                else:
-                    self.freq1 -= 200
-                    self.freq2 -= 200
-            files = select_audio(self.freq1, self.freq2)
-            print("Frequency 1: {self.freq1} | 2: {self.freq2}")
-            names = [i.split('/')[-1].split('.')[0] for i in files]
-            audio = []
-            for i, (f, n) in enumerate(zip(files, names), start=1):
-                audio.append({'name': i, 'file': f, 'id': i})
-            output = {
-                        'type': 'trial',
-                        'lower_left_text': 'Trial: {}'.format(self.num_trial),
-                        'lower_right_text': f'Session ID: {self.id}',
-                        'upper_left_text': 'Psylab n-AFC Experiment | Quiet Thresholds',
-                        'items': audio,
-                        'prompt1': 'Press space to listen',
-                        'prompt2': 'Select a sound (press 1 or 2)',
-                        'answer': 1,
-                        'delay': 500,
-                        'next_delay': 2000,
-                      }
-            self.response = output
-            print('trial' + '-' * 30 + f'\n{self}')
+            last_answer = None
+        return last_answer
+
 
     def stop(self, data):
         self.read(data)

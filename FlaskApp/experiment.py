@@ -31,7 +31,7 @@ class Experiment(object):
 
     def send_request(self, data):
         """
-        Get response from gustav.
+        Send request to gustav.
         """
         print(f"send_request: {data}")
         self.read(data)
@@ -49,19 +49,29 @@ class Experiment(object):
             data['response_file'] = self.expected_response
             self.dump(data=data, prefix='c')
 
-    def get_response(self, sleep=0.1, max_timeout=10):
+    def get_response(self, sleep=0.1, max_timeout=10, max_load_attempts=3):
         """
         Get response from gustav.
         """
         print(f'Waiting for response: {self.expected_response}')
         timeout = 0
+        load_attempt = 0
         while not os.path.exists(self.expected_response) and timeout <= max_timeout:
             time.sleep(sleep)
             timeout += sleep
             # print(f"waiting {timeout} < {max_timeout}")
         if timeout <= max_timeout:
-            self.response = self.load(self.expected_response)
-            print(f"got reponse: {self.response}")
+            print(f"Received reponse")
+            for i in range(max_load_attempts):
+                try:
+                    self.response = self.load(self.expected_response)
+                except:
+                    load_attempt += 1
+                    print(f'Could not load file, attempt: {load_attempt}/{max_load_attempts}')
+                    time.sleep(sleep)
+            if load_attempt >= max_load_attempts:
+                print('Reached max load attempts: {max_load_attempts}, ignoring out')
+                self.response = {}
         else:
             print(f'Max timeout ({max_timeout} s) reached, no response!')
             self.response = {}
