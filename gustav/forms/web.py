@@ -147,15 +147,6 @@ class Interface():
             filename = os.path.join(self.expdir, self.id, f"g{exp.run.trials_block}_trial.json")
         self.dump(output, filename)
 
-    def dump_info(self, filename):
-        output = {
-          "type": "info",
-          "message": self.info
-        }
-        print('info' + '-' * 30 + f'\n{output}')
-        self.dump(output, filename)
-        return output
-
     def abort(self, data, keep_dir=True):
         self.read(data)
         if os.path.exists(self.subjdir):
@@ -231,6 +222,15 @@ class Interface():
         with open(filename, 'w') as f:
             json.dump(style, f, indent=2)
         print(f'dump -> {filename}')
+
+    def dump_info(self, filename):
+        output = {
+          "type": "info",
+          "message": self.info.replace('\n', '<br>')
+        }
+        print('info' + '-' * 30 + f'\n{output}')
+        self.dump(output, filename)
+        return output
 
     def destroy(self):
         # Stop experiment

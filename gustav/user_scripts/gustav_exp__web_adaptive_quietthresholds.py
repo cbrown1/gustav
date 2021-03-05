@@ -39,6 +39,16 @@ def setup(exp):
     exp.note = "Quiet thresholds for pure tones"
     exp.comments = '''\
     '''
+    exp.info = '''Quiet thresholds for pure tones
+
+    In this experiment you will see 2 boxes on the screen displaying an audio player
+    The sounds will be played sequentially and you will be asked to choose the louder one
+    Please press 1 or 2 to make your selection
+    '''
+    exp.welcome = '''Welcome to the experiment.
+    Before we start the experiment please provide informed consent on the next page.
+    '''
+
 
     """EXPERIMENT VARIABLES
         There are 2 kinds of variables: factorial and ordered
@@ -82,8 +92,8 @@ def setup(exp):
     exp.var.factorial['frequency']= [
                                     '125',
                                     '250',
-                                    '500',
-                                    '1000',
+                                    # '500',
+                                    # '1000',
                                   ]
     def step(exp):
         print(f'STEP')
@@ -143,6 +153,44 @@ def setup(exp):
     if you want to cancel the experiment, set both run.block_on and
     run.pylab_is_go to False
 """
+def pre_exp(exp):
+    print('PRE EXP')
+    # Only runs once before the whole thing
+    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","), appdir="/home/kutay/Documents/git/gustav/FlaskApp")
+    # Setup styling here (see style.json for more)
+    exp.interface.style['logo'] = 'static/index.svg'
+    exp.interface.style["--background_color"] = "#232323"
+    exp.interface.style["--second_color"] = "#c0c0c0"
+    exp.interface.style["--button_size"] = "100px"
+    exp.interface.style["--button-border"] = "2px"
+    exp.interface.style["--button-border-playing"] = "6px"
+    exp.interface.style["--corner-text-fs"] = "20px"
+    # exp.interface.style["message"] = "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment."
+    # exp.interface.style["message"] = f"<code>{exp.subjID} testing...</code>"
+    exp.interface.style["message"] = exp.welcome.replace('\n', '<br>')
+    exp.interface.style["performance_feedback"] = True
+    exp.interface.feedback_duration = 500
+    # Save styling information for the server
+    exp.interface.dump_style()
+    # Wait for initial client input
+    # This will trigger if the main page is loaded in a browser
+    # That's why the max timeout is larger than the default
+    ret = exp.interface.get_resp_pre_exp(max_timeout=3000)
+    if not ret:
+        exp.run.block_on = False
+        exp.run.gustav_is_go = False
+        exp.var.dynamic['msg'] = "Cancelled by user"
+    else:
+        exp.subjID = ret['id']
+        exp.interface.info = exp.info
+        exp.interface.upper_left_text = f"Subject {exp.subjID}"
+        exp.interface.prompt1 = "Press any key to begin"
+        exp.interface.prompt2 = "Which Interval?"
+        # Wait for info call
+        ret = exp.interface.get_resp()
+        fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
+        exp.interface.dump_info(fname)
+
 def prompt_response(exp):
     """
     Only called after present_trial and before post_trial
@@ -154,7 +202,6 @@ def prompt_response(exp):
     while True:
         ret = exp.interface.get_resp('answer')
         if ret:
-            # Q: What should be the response, does it matter?
             exp.run.response = ret['answer']
             break
         else:
@@ -171,8 +218,7 @@ def pre_trial(exp):
         var.current['varname'].
     """
     print(f'PRE TRIAL {exp.run.trials_block}')
-    exp.interface.update_Status_Right("Trial {:}".format(exp.run.trials_block))
-    # isi = np.zeros(int(psylab.signal.ms2samp(int(exp.user.isi),int(exp.user.fs))))
+    exp.interface.lower_left_text = f'Trial: {exp.run.trials_block}'
     interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
     interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
     interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
@@ -189,9 +235,9 @@ def pre_trial(exp):
 
     exp.interface.audio = []
     for i, a in enumerate(audio, start=1):
-        fname = os.path.join(exp.interface.subjdir, f'{exp.run.trials_block}_{i}.wav')
+        fname = os.path.join(exp.interface.subjdir, f'{exp.run.block}_{exp.run.trials_block}_{i}.wav')
         sf.write(fname, a, exp.user.fs)
-        client_fname = f'static/exp/{exp.subjID}/{exp.run.trials_block}_{i}.wav'
+        client_fname = f'static/exp/{exp.subjID}/{exp.run.block}_{exp.run.trials_block}_{i}.wav'
         exp.interface.audio.append({'name': i, 'file': client_fname, 'id': i})
 
 def present_trial(exp):
@@ -214,48 +260,15 @@ def post_trial(exp):
             correct = True
         print(f'Got answer {exp.run.response}, correct: {correct}')
 
-def pre_exp(exp):
-    print('PRE EXP')
-    # Only runs once before the whole thing
-    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","), appdir="/home/kutay/Documents/git/gustav/FlaskApp")
-    # Setup styling here (see style.json for more)
-    exp.interface.style["--background_color"] = "#232323"
-    exp.interface.style["--button_size"] = "85px"
-    exp.interface.style["--button-border"] = "1px"
-    exp.interface.style["--button-border-playing"] = "5px"
-    # exp.interface.style["message"] = "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment."
-    exp.interface.style["message"] = f"<code>{exp.subjID} testing...</code>"
-    exp.interface.style['logo'] = 'static/index.svg'
-    # Save styling information for the server
-    exp.interface.dump_style()
-    # Wait for initial client input
-    # This will trigger if the main page is loaded in a browser
-    # That's why the max timeout is larger than the default
-    ret = exp.interface.get_resp_pre_exp(max_timeout=3000)
-    if not ret:
-        exp.run.block_on = False
-        exp.run.gustav_is_go = False
-        exp.var.dynamic['msg'] = "Cancelled by user"
-    else:
-        exp.subjID = ret['id']
-        exp.interface.info = exp.note
-        exp.interface.upper_left_text = f"Subject {exp.subjID}"
-        exp.interface.prompt1 = "Press any key to begin"
-        exp.interface.prompt2 = "Which Interval?"
-        # exp.interface.update_Notify_Right("Listen")
-        # Wait for info call
-        ret = exp.interface.get_resp()
-        fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
-        exp.interface.dump_info(fname)
-
 def post_exp(exp):
     print('POST EXP')
+    exp.interface.prompt1 = "Thanks for participating"
     exp.interface.destroy()
 
 def pre_block(exp):
     print(f'PRE BLOCK {exp.run.block}')
     # Runs once before every block of trials (4 blocks in this case because of 4 frequencies)
-    exp.interface.update_Status_Center("Block {:} of {:}".format(exp.run.block+1, exp.var.nblocks+1))
+    exp.interface.lower_right_text = f"Block {exp.run.block + 1} of {exp.var.nblocks}"
 
 if __name__ == '__main__':
     argv = sys.argv[1:]
