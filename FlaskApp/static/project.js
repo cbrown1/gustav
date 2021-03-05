@@ -1,6 +1,7 @@
 var apiUrl = "/api";
-let expectedAnswer = 0;
+let correctAnswer = 0;
 let userSelection = 0;
+let performanceFeedback = true;
 var abortBtn = function (){
     $('.top-right').on("click",function() {
         var confirm = window.confirm("Are you sure you want to cancel the test?");
@@ -24,6 +25,7 @@ var mainColors = function (){
                 document.documentElement.style.setProperty(key, val);
             }
         });
+        performanceFeedback = data.performance_feedback;
     });
 }
 // Get session id
@@ -166,21 +168,29 @@ var playBtn = function (elem){
         userSelection = el.data("id");
         console.log("User selection:", userSelection)
 
-        if (el.data("id") == expectedAnswer){
-            testArea.find("p.w-100.text-center").html("correct answer");
-        }else{
-            testArea.find("p.w-100.text-center").html("wrong answer");
+        // Provide performance feedback : add button text
+        if (performanceFeedback) {
+          if (el.data("id") == correctAnswer){
+              testArea.find("p.w-100.text-center").html("Correct");
+          }else{
+              testArea.find("p.w-100.text-center").html("Incorrect");
+          }
         }
 
 
         disableAllPlayButtons();
-        testArea.find("button").each(function (){
-            if ($(this).data("id") == expectedAnswer){
-                $(this).addClass("success");
-            }else{
-                $(this).addClass("error");
-            }
-        })
+        // Provide performance feedback : add tick/cross and change color
+        if (performanceFeedback) {
+          testArea.find("button").each(function (){
+              if ($(this).data("id") == userSelection){
+                if ($(this).data("id") == correctAnswer){
+                  $(this).addClass("success");
+                } else {
+                  $(this).addClass("error");
+                }
+              }
+          })
+        }
         // Send user selection
         setTimeout(function (){
             getJsonApi({'type': 'answer', 'id': getID(), 'answer': userSelection});
@@ -245,8 +255,8 @@ var getJsonApi = function (formdata = {'type': 'trial', 'id': getID()}){
                     var i = parseInt(key) +1;
                     items.push('<div><button type="button" onclick="playBtn(this);" data-eq="' + i + '" data-id="' + val.id + '" data-sound="' + val.file + '">' + val.name + '</button><span></span></div>');
                 });
-                expectedAnswer = data.answer;
-                console.log("Expected answer:", expectedAnswer);
+                correctAnswer = data.answer;
+                console.log("Correct answer:", correctAnswer);
                 $("body>section#testArea")
                     .html(items).attr("data-prompt2",data.prompt2)
                     .attr("data-delay",data.delay)
