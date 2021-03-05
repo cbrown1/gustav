@@ -11,7 +11,7 @@
 
   "--button_size" : "85px",
   "loading_bars": false,
-
+  "performance_feedback": true,
 
   "--success_border": "#249a41",
   "--error_border": "#ea4335",
