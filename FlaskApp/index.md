@@ -45,3 +45,12 @@ pip install pysoundfile
 sudo apt-get install libsndfile1
 
 ```
+
+## Raspberry PI Setup
+
+sudo pacman -S gcc tmux python-pip python-numpy python-scipy python-flask python-requests python-matplotlib python-pandas
+sudo pacman -S fakeroot binutils make cmake patch yay python-wheel tk micro xclip mc
+
+pip install soundfile
+pip install git+https://github.com/cbrown1/psylab
+pip install git+https://github.com/kbsezginel/gustav
