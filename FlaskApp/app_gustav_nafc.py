@@ -1,3 +1,4 @@
+import sys
 import json
 from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
@@ -40,4 +41,8 @@ def api():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5050)
+    if len(sys.argv) > 1:
+        port = 5050 + int(sys.argv[1])
+    else:
+        port = 5050
+    app.run(host='0.0.0.0', debug=True, port=port)
