@@ -90,10 +90,10 @@ def setup(exp):
     """
 
     exp.var.factorial['frequency']= [
-                                    '125',
-                                    '250',
-                                    # '500',
-                                    # '1000',
+                                    # '125',
+                                    # '250',
+                                    '500',
+                                    '1000',
                                   ]
     def step(exp):
         print(f'STEP')
@@ -156,7 +156,7 @@ def setup(exp):
 def pre_exp(exp):
     print('PRE EXP')
     # Only runs once before the whole thing
-    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","), appdir="/home/kutay/Documents/git/gustav/FlaskApp")
+    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","), port=5050)
     # Setup styling here (see style.json for more)
     exp.interface.style['logo'] = 'static/index.svg'
     exp.interface.style["--background_color"] = "#232323"
@@ -165,8 +165,6 @@ def pre_exp(exp):
     exp.interface.style["--button-border"] = "2px"
     exp.interface.style["--button-border-playing"] = "6px"
     exp.interface.style["--corner-text-fs"] = "20px"
-    # exp.interface.style["message"] = "Click '<code>Start</code>' or press '<code>Space</code>' to start the experiment."
-    # exp.interface.style["message"] = f"<code>{exp.subjID} testing...</code>"
     exp.interface.style["message"] = exp.welcome.replace('\n', '<br>')
     exp.interface.style["performance_feedback"] = True
     exp.interface.feedback_duration = 500
@@ -182,9 +180,10 @@ def pre_exp(exp):
         exp.var.dynamic['msg'] = "Cancelled by user"
     else:
         exp.subjID = ret['id']
+        exp.interface.client_subjdir = f'{exp.interface.client_portdir}/{exp.subjID}'
         exp.interface.info = exp.info
         exp.interface.upper_left_text = f"Subject {exp.subjID}"
-        exp.interface.prompt1 = "Press any key to begin"
+        exp.interface.prompt1 = "Press space to begin"
         exp.interface.prompt2 = "Which Interval?"
         # Wait for info call
         ret = exp.interface.get_resp()
@@ -237,7 +236,7 @@ def pre_trial(exp):
     for i, a in enumerate(audio, start=1):
         fname = os.path.join(exp.interface.subjdir, f'{exp.run.block}_{exp.run.trials_block}_{i}.wav')
         sf.write(fname, a, exp.user.fs)
-        client_fname = f'static/exp/{exp.subjID}/{exp.run.block}_{exp.run.trials_block}_{i}.wav'
+        client_fname = os.path.join(exp.interface.client_subjdir, f'{exp.run.block}_{exp.run.trials_block}_{i}.wav')
         exp.interface.audio.append({'name': i, 'file': client_fname, 'id': i})
 
 def present_trial(exp):
@@ -253,7 +252,6 @@ def post_trial(exp):
     # Updates the buttons according to correct answer
     # this is handled on the server side
     print('POST TRIAL')
-    # ret = exp.interface.get_resp('answer')
     if exp.run.gustav_is_go:
         correct = False
         if str(exp.var.dynamic['correct']).lower() == int(exp.run.response):

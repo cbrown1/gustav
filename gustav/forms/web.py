@@ -9,16 +9,18 @@ import numpy as np
 
 
 class Interface():
-    def __init__(self, alternatives=2, prompt='Choose an alternative', appdir=""):
+    def __init__(self, alternatives=2, prompt='Choose an alternative', port=5050):
         self.prompt = prompt
         self.alternatives = alternatives
         self.filedir = os.path.dirname(os.path.abspath(__file__))
         style_file = os.path.join(self.filedir, 'style.json')
         with open(style_file) as f:
             self.style = json.load(f)
-        self.appdir = appdir
+        appdir = os.path.join(self.filedir, '..', '..', 'FlaskApp')
+        self.appdir = os.path.abspath(appdir)
         self.staticdir = os.path.join(self.appdir, 'static')
-        self.expdir = os.path.join(self.appdir, 'static', 'exp')
+        self.expdir = os.path.join(self.appdir, 'static', 'exp', str(port))
+        self.client_portdir = f'static/exp/{port}'
         self.sessions = {}
         self.io = {}
 

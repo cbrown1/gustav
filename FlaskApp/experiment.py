@@ -8,20 +8,28 @@ from tools import select_audio, read_json
 
 class Experiment(object):
     """Psylab Experiment"""
-    def __init__(self):
+    def __init__(self, subject_id="1", port=5050):
         self.root = 'static'
         self.out_dir = 'exp'
         self.sessions = {}
         self.num_trial = 0
-        self.freq1 = 1200
-        self.freq2 = 2000
+        self.port = port
+        self.id = subject_id
 
     def __repr__(self):
-        return f"Psylab experiment\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}\n  Sessions: {len(self.sessions)}"
+        return f"Psylab experiment\n  Port: {self.port}\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}\n  Sessions: {len(self.sessions)}"
+
+    def setup(self, subject_id="1", port=5050):
+        self.id = subject_id
+        self.port = port
+        self.port_dir = os.path.join(self.root, self.out_dir, str(self.port))
+        os.makedirs(self.port_dir, exist_ok=True)
+        self.subject_dir = os.path.join(self.port_dir, str(self.id))
+        self.dir = os.path.join(self.port_dir, str(self.id))
 
     def read(self, data):
         self.id = data['id']
-        self.dir = os.path.join(self.root, self.out_dir, str(self.id))
+        self.dir = os.path.join(self.port_dir, str(self.id))
         if self.id not in self.sessions:
             self.sessions[self.id] = {'id': self.id, 'dir': self.dir, 'trial': self.num_trial}
         else:

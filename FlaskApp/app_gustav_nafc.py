@@ -22,16 +22,17 @@ def api():
     # Forward request to gustav
     client_request = dict(request.form)
     if client_request['type'] == "style":
+        subject_id = str(datetime.timestamp(datetime.now()))
         # Initialize new ID and return styling information
-        Exp.server_id = str(datetime.timestamp(datetime.now()))
-        Exp.initialize({'id': Exp.server_id})
-        client_request['id'] = Exp.server_id
+        Exp.setup(subject_id, port)
+        Exp.initialize({'id': Exp.id})
+        client_request['id'] = Exp.id
         return jsonify(Exp.style)
-    else:
-        if not hasattr(Exp, 'id'):
-            return jsonify({})
-    if hasattr(Exp, 'server_id'):
-        client_request['id'] = Exp.server_id
+    # else:
+    #     if not hasattr(Exp, 'id'):
+    #         return jsonify({})
+    if hasattr(Exp, 'id'):
+        client_request['id'] = Exp.id
     Exp.send_request(client_request)
     # Get gustav response
     response = Exp.get_response()
