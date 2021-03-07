@@ -57,7 +57,7 @@ class Experiment(object):
             data['response_file'] = self.expected_response
             self.dump(data=data, prefix='c')
 
-    def get_response(self, sleep=0.1, max_timeout=10, max_load_attempts=3):
+    def get_response(self, sleep=0.1, max_timeout=20, max_load_attempts=3):
         """
         Get response from gustav.
         """
@@ -78,7 +78,7 @@ class Experiment(object):
                     print(f'Could not load file, attempt: {load_attempt}/{max_load_attempts}')
                     time.sleep(sleep)
             if load_attempt >= max_load_attempts:
-                print('Reached max load attempts: {max_load_attempts}, ignoring out')
+                print(f'Reached max load attempts: {max_load_attempts}, ignoring out')
                 self.response = {}
         else:
             print(f'Max timeout ({max_timeout} s) reached, no response!')

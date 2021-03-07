@@ -11,6 +11,7 @@ import numpy as np
 class Interface():
     def __init__(self, alternatives=2, prompt='Choose an alternative', port=5050):
         self.prompt = prompt
+        self.abort_prompt = "Experiment has been aborted."
         self.alternatives = alternatives
         self.filedir = os.path.dirname(os.path.abspath(__file__))
         style_file = os.path.join(self.filedir, 'style.json')
@@ -47,14 +48,10 @@ class Interface():
                 outs = os.listdir(out_dir)
                 for out in outs:
                     if out.startswith('c') and out.split('.')[-1] == 'json' and out not in self.io and out not in self.checked:
-                        print(f'Found new out: {out}')
                         filename = os.path.join(out_dir, out)
+                        print(f'Found new out: {filename}')
                         try:
                             resp = self.load(filename)
-                            if resp['type'] == 'abort':
-                                print('Aborting experiment')
-                                self.destroy()
-                                exit(1)
                             if resp_type is None:
                                 print('No type selected, read type: ', resp['type'] if 'type' in resp else None)
                                 waiting = False
@@ -74,7 +71,7 @@ class Interface():
                             print(f'Could not load file, attempt: {load_attempt}')
                             time.sleep(sleep)
                         if load_attempt >= max_load_attempts:
-                            print('Reached max load attempts: {max_load_attempts}, ignoring out')
+                            print(f'Reached max load attempts: {max_load_attempts}, ignoring out')
                             self.checked.append(out)
                             load_attempt = 0
 
@@ -146,25 +143,36 @@ class Interface():
         if last_answer is not None:
             filename = os.path.join(self.appdir, last_answer['response_file'])
         else:
-            filename = os.path.join(self.expdir, self.id, f"g{exp.run.trials_block}_trial.json")
+            filename = os.path.join(self.subjdir, f"g{exp.run.trials_block}_trial.json")
         self.dump(output, filename)
 
-    def abort(self, data, keep_dir=True):
-        self.read(data)
+    def destroy(self, archive=False, sleep=1):
         if os.path.exists(self.subjdir):
-            print('Session exists! Deleting...')
+            if archive:
+                shutil.make_archive(f"{self.subjdir}.zip", 'zip', self.subjdir)
+                print(f'Archived: {self.subjdir}.zip')
+            print(f'Waiting for {sleep} s')
+            time.sleep(sleep)
+            print('Deleting...')
             if len(os.listdir(self.subjdir)) > 1:
                 for f in os.listdir(self.subjdir):
                     os.remove(os.path.join(self.subjdir, f))
-            if not keep_dir:
-                shutil.rmtree(self.subjdir)
+            shutil.rmtree(self.subjdir)
+
+    def abort(self, exp, prompt=None, archive=False, destroy=False):
+        if prompt is None:
+            prompt = self.abort_prompt
         output = {
             'type': 'abort',
-            'message': "Experiment has been aborted."
+            'message': prompt
         }
+        filename = os.path.join(self.subjdir, f"g{exp.run.trials_block}_abort.json")
+        self.dump(output, filename)
+        print('abort\n' + '-' * 30 + f'\n{self}')
+        if destroy:
+            self.destroy(archive=archive)
         self.response = output
         self.num_trial = 0
-        print('abort' + '-' * 30 + f'\n{self}')
 
     def find_last_answer(self):
         """
@@ -179,7 +187,6 @@ class Interface():
         else:
             last_answer = None
         return last_answer
-
 
     def stop(self, data):
         self.read(data)
@@ -233,7 +240,3 @@ class Interface():
         print('info' + '-' * 30 + f'\n{output}')
         self.dump(output, filename)
         return output
-
-    def destroy(self):
-        # Stop experiment
-        pass

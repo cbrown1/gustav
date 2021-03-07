@@ -199,11 +199,12 @@ def prompt_response(exp):
     """
     print('PROMPT RESPONSE')
     while True:
-        ret = exp.interface.get_resp('answer')
-        if ret:
+        ret = exp.interface.get_resp()
+        if 'answer' in ret:
             exp.run.response = ret['answer']
             break
-        else:
+        elif 'type' in ret and ret['type'] == 'abort':
+            exp.interface.abort(exp, archive=True)
             exp.run.block_on = False
             exp.run.gustav_is_go = False
             exp.var.dynamic['msg'] = "Cancelled by user"
@@ -261,7 +262,7 @@ def post_trial(exp):
 def post_exp(exp):
     print('POST EXP')
     exp.interface.prompt1 = "Thanks for participating"
-    exp.interface.destroy()
+    exp.interface.destroy(sleep=20)
 
 def pre_block(exp):
     print(f'PRE BLOCK {exp.run.block}')
