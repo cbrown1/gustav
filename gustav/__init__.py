@@ -42,4 +42,4 @@
 __version__ = '0.8.0'
 
 from .gustav import run, info, main
-from . import frontends, methods
+from . import frontends, methods, forms

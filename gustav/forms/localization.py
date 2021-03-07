@@ -138,9 +138,9 @@ import time
 import math
 
 class Interface():
-    def __init__(self, alternatives=2, prompt="Choose an alternative"):
+    def __init__(self, sources=15, prompt="Choose a location"):
         # Initialize text areas
-        self.title_l_str = "Gustav n-AFC!"
+        self.title_l_str = "Gustav localize!"
         self.title_c_str = ""
         self.title_r_str = ""
         self.notify_l_str = ""
@@ -217,7 +217,6 @@ class Interface():
                             },
                         }
 
-
         # Initialize curses stuff
         self.stdscr = curses.initscr()   # Return a window object representing the entire screen
         self.stdscr.keypad(True)         # Accept multibyte special keys (eg., curses.KEY_LEFT)
@@ -226,26 +225,27 @@ class Interface():
         curses.noecho()                  # Don't automatically echo keypresses to screen
         curses.curs_set(0)               # Hide the cursor
         curses.start_color()             # Initialize color
+        curses.mousemask(1)
 
         #####################################################################
         ## Begin NAFC-specific stuff
-        if isinstance(alternatives, list):
-            self.alternatives = alternatives 
-        else:
-            self.alternatives = []
-            for i in range(alternatives):
-                self.alternatives.append(str(i+1)) # Text of alternatives
-        self.button_colors = []
-        self.button_borders = []
-        for i in range(len(self.alternatives)):
-            self.button_colors.append(0)
-            self.button_borders.append(1)
+#        if isinstance(alternatives, list):
+#            self.alternatives = alternatives 
+#        else:
+#            self.alternatives = []
+#            for i in range(alternatives):
+#                self.alternatives.append(str(i+1)) # Text of alternatives
+#        self.button_colors = []
+#        self.button_borders = []
+#        for i in range(len(self.alternatives)):
+#            self.button_colors.append(0)
+#            self.button_borders.append(1)
 
         self.buttons_show = True
         self.prompt_show = True
         self.button_w = 7                   # Button width. odd values allow text to be centered. Height will be 1 less
         self.button_space = 7               # Space between buttons
-        self.pad_y = 8                      # offset from top of window (prompt starts here)
+        self.pad_y = 3                      # offset from top of window (prompt starts here)
 
         # Set colors
         self.color_default_fg =     self.palette256['Grey']
@@ -357,6 +357,68 @@ class Interface():
         self.button_color_names = ['None', 'Grey', 'Green', 'Red', 'Yellow'] # Allow user to specify color/border by name
         self.button_border_names = ['None', 'Light', 'Heavy', 'Double']      # Must be in same order as button_f_colors 
                                                                              # button_b_weight and button_b_colors
+        origin = """
+╭───╮
+╽   ╽
+┗┅┅┅┛
+"""
+
+        self.sources_dict = {15:  {'1': {'x': 1,
+                                       'y': 18,
+                                      },
+                                   '2': {'x': 1,
+                                       'y': 14,
+                                      },
+                                   '3': {'x': 4,
+                                       'y': 10,
+                                      },
+                                   '4': {'x': 9,
+                                       'y': 7,
+                                      },
+                                   '5': {'x': 15,
+                                       'y': 4,
+                                      },
+                                   '6': {'x': 22,
+                                       'y': 2,
+                                      },
+                                   '7': {'x': 29,
+                                       'y': 1,
+                                      },
+                                   '8': {'x': 37,
+                                       'y': 1,
+                                      },
+                                   '9': {'x': 45,
+                                       'y': 1,
+                                      },
+                                   '10': {'x': 52,
+                                       'y': 2,
+                                      },
+                                   '11': {'x': 59,
+                                       'y': 4,
+                                      },
+                                   '12': {'x': 65,
+                                       'y': 7,
+                                      },
+                                   '13': {'x': 70,
+                                       'y': 10,
+                                      },
+                                   '14': {'x': 73,
+                                       'y': 14,
+                                      },
+                                   '15': {'x': 73,
+                                       'y': 18,
+                                      },
+                                  }
+                        }
+
+        self.sources = self.sources_dict[sources]
+        self.sources_width = 0
+        self.sources_height = 0
+
+        for s,data in self.sources.items():
+            self.sources_width = max(self.sources_width, data['x'])
+            self.sources_height = max(self.sources_height, data['y'])
+
         self.redraw()
 
 
@@ -376,16 +438,21 @@ class Interface():
 
         """
         self.win_height,self.win_width = self.stdscr.getmaxyx()
-        
+        self.sources_offset_x = (self.win_width // 2) - (self.sources_width // 2) - (self.sources_width % 2)  # Button width
+        self.sources_offset_y = (self.win_height // 2) - (self.sources_height // 2) - (self.sources_height % 2)  # Button width
+
         glyph_blocks = self.glyphs['blocks']
 
         self.stdscr.erase()
 
-        button_space = (self.button_w * 2) + self.button_space
+#        button_space = (self.button_w * 2) + self.button_space
 
-        array_w = (button_space * len(self.alternatives)) - self.button_space # Take one space back for the last one
-        array_x1 = int((self.win_width // 2) - (array_w // 2) - array_w % 2)
-        array_x2 = array_x1 + array_w
+#        array_w = (button_space * len(self.alternatives)) - self.button_space # Take one space back for the last one
+#        array_x1 = int((self.win_width // 2) - (array_w // 2) - array_w % 2)
+#        array_x2 = array_x1 + array_w
+        array_w = self.sources_width
+        array_x1 = self.sources_offset_x + 3
+        array_x2 = array_x1 + self.sources_width -3
         this_y = self.pad_y
 
         # Handle prompt
@@ -401,31 +468,29 @@ class Interface():
         this_y += 1
 
         # Handle button array
-        if self.buttons_show:
+#        if self.buttons_show:
+        if True:
             # Draw button face
-            for ii in range(len(self.alternatives)):
-                this_x = array_x1 + (ii*button_space)
-                color = self.button_f_colors[self.button_colors[ii]]
-                for y in range (self.button_w-2):
-                    self.stdscr.addstr(this_y + y+1,                this_x+2,                     glyph_blocks['block'] * ((self.button_w*2)-2), color[0])
-                    self.stdscr.addstr(this_y + y+1,                this_x+1,                     glyph_blocks['block_hr'], color[0]) # Half blocks keep the border
-                    self.stdscr.addstr(this_y + y+1,                this_x + (self.button_w*2)-1, glyph_blocks['block_hl'], color[0]) # space equal to that of horizontal
-                    self.stdscr.addstr(this_y + (self.button_w//2), this_x + (self.button_w),     self.alternatives[ii],    curses.A_BOLD | color[1])
+            b_weight = self.glyphs['lines']['double']
+            color = self.button_f_colors[0]
+            for ii,data in self.sources.items():
+                self.stdscr.addstr(self.sources_offset_y + data['y'] - 1, self.sources_offset_x + data['x'] - 2, b_weight['corner_ul']) #, color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'] - 1, self.sources_offset_x + data['x'] - 1, b_weight['line_h']) #,    color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'] - 1, self.sources_offset_x + data['x'],     b_weight['line_h']) #,    color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'] - 1, self.sources_offset_x + data['x'] + 1, b_weight['line_h']) #,    color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'] - 1, self.sources_offset_x + data['x'] + 2, b_weight['corner_ur']) #, color[0])
 
-            # Draw button border
-            for ii in range(len(self.alternatives)):
-                this_x = array_x1 + (ii*button_space)
-                b_color = self.button_b_colors[self.button_borders[ii]]
-                b_weight = self.button_b_weights[self.button_borders[ii]]
-                self.stdscr.addstr(this_y,                   this_x,                     b_weight['line_h'] * (self.button_w*2), b_color)
-                self.stdscr.addstr(this_y + self.button_w-1, this_x,                     b_weight['line_h'] * (self.button_w*2), b_color)
-                self.stdscr.addstr(this_y,                   this_x,                     b_weight['corner_ul'],                  b_color)
-                self.stdscr.addstr(this_y,                   this_x + (self.button_w*2), b_weight['corner_ur'],                  b_color)
-                self.stdscr.addstr(this_y + self.button_w-1, this_x,                     b_weight['corner_ll'],                  b_color)
-                self.stdscr.addstr(this_y + self.button_w-1, this_x + (self.button_w*2), b_weight['corner_lr'],                  b_color)
-                for y in range (self.button_w-2): # Take an extra for vcenter (can't center both simultanously when both are odd)
-                    self.stdscr.addstr(this_y + y+1,         this_x,                     b_weight['line_v'],                     b_color)
-                    self.stdscr.addstr(this_y + y+1,         this_x + (self.button_w*2), b_weight['line_v'],                     b_color)
+                self.stdscr.addstr(self.sources_offset_y + data['y'],     self.sources_offset_x + data['x'] - 2, b_weight['line_v']) #,    color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'],     self.sources_offset_x + data['x'] + 2, b_weight['line_v']) #,    color[0])
+
+                self.stdscr.addstr(self.sources_offset_y + data['y'] + 1, self.sources_offset_x + data['x'] - 2, b_weight['corner_ll']) #, color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'] + 1, self.sources_offset_x + data['x'] - 1, b_weight['line_h']) #,    color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'] + 1, self.sources_offset_x + data['x'],     b_weight['line_h']) #,    color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'] + 1, self.sources_offset_x + data['x'] + 1, b_weight['line_h']) #,    color[0])
+                self.stdscr.addstr(self.sources_offset_y + data['y'] + 1, self.sources_offset_x + data['x'] + 2, b_weight['corner_lr']) #, color[0])
+
+                self.stdscr.addstr(self.sources_offset_y + data['y'],     self.sources_offset_x + data['x'], ii) #, color[0])
+
 
         # Upper Left Notify
         if self.notify_l_show:
@@ -556,6 +621,21 @@ class Interface():
 
     #########################################################################
     ## USER FACING FUNCTIONS BELOW
+
+    def hit_test_button(self, mx, my):
+        """Check if the provided x,y coordinates are on one of the buttons
+        """
+        clicked = None
+        for source,data in self.sources.items():
+            # TODO: Button width/height are hardcoded here
+            if ((mx >= self.sources_offset_x + data['x'] - 2) and
+                (mx <= self.sources_offset_x + data['x'] + 2) and
+                (my >= self.sources_offset_y + data['y'] - 1) and
+                (my <= self.sources_offset_y + data['y'] + 1)):
+                clicked = source
+                break
+        return clicked
+
 
     def get_resp(self, timeout=None):
         """Wait modally for a keypress, returns the key as a char. 
@@ -910,16 +990,21 @@ class Interface():
                 ('tv_nsec', ctypes.c_long)
             ]
 
-        #Configure Python access to the clock_gettime C library, via ctypes:
-        #Documentation:
-        #-ctypes.CDLL: https://docs.python.org/3.2/library/ctypes.html
-        #-librt.so.1 with clock_gettime: https://docs.oracle.com/cd/E36784_01/html/E36873/librt-3lib.html #-
-        #-Linux clock_gettime(): http://linux.die.net/man/3/clock_gettime
-        librt = ctypes.CDLL('librt.so.1', use_errno=True)
-        clock_gettime = librt.clock_gettime
-        #specify input arguments and types to the C clock_gettime() function
-        # (int clock_ID, timespec* t)
-        clock_gettime.argtypes = [ctypes.c_int, ctypes.POINTER(timespec)]
+        if sys.platform.lower() != 'darwin':
+            #Configure Python access to the clock_gettime C library, via ctypes:
+            #Documentation:
+            #-ctypes.CDLL: https://docs.python.org/3.2/library/ctypes.html
+            #-librt.so.1 with clock_gettime: https://docs.oracle.com/cd/E36784_01/html/E36873/librt-3lib.html #-
+            #-Linux clock_gettime(): http://linux.die.net/man/3/clock_gettime
+            librt = ctypes.CDLL('librt.so.1', use_errno=True)
+            clock_gettime = librt.clock_gettime
+            #specify input arguments and types to the C clock_gettime() function
+            # (int clock_ID, timespec* t)
+            clock_gettime.argtypes = [ctypes.c_int, ctypes.POINTER(timespec)]
+        else:
+            libsysb = ctypes.CDLL('/usr/lib/libSystem.B.dylib',use_errno=True)
+            clock_gettime = libsysb.clock_gettime
+            clock_gettime.argtypes = [ctypes.c_int, ctypes.POINTER(timespec)]
 
         def timestamp_s(self):
             "return a high-precision timestamp in seconds (sec)"
@@ -964,8 +1049,11 @@ if __name__ == "__main__":
     # Initialize interface
     # Alternatives can be a number, in which case labels will be "1", "2" etc., or
     # a list where len = # of alternatives, and each item is a single unique char
-    alternatives = ['A', 'B']
-    interface = Interface(alternatives=alternatives)
+    sources = 15
+    interface = Interface(sources=sources)
+    sources_arr = []
+    for i in range(sources):
+        sources_arr.append(str(i+1))
     # Add some text
     interface.show_Prompt(False)
     interface.show_Buttons(False)
@@ -978,7 +1066,7 @@ if __name__ == "__main__":
     interface.show_Notify_Left(False)
     interface.show_Prompt(False)
     interface.show_Buttons(False)
-    interface.update_Title_Right( "A {:}-AFC interface".format(len(alternatives)))
+    interface.update_Title_Right( "A Localization interface")
     interface.update_Notify_Left( "Press space to\nstart a trial", show=True)
     interface.update_Notify_Right("Listen!", show=False, redraw=True)
 
@@ -1005,7 +1093,7 @@ if __name__ == "__main__":
             interface.show_Prompt(redraw=True)
         elif key == 's':
             interface.show_Buttons()
-        elif key.upper() in alternatives: # User upper-case so subj can just hit a key without shift
+        elif key in sources_arr: # User upper-case so subj can just hit a key without shift
             interface.show_Prompt(False)
             interface.show_Buttons(True, redraw=True)
             for i in range(3):
@@ -1029,15 +1117,19 @@ if __name__ == "__main__":
             interface.wait_ms(750)
 #            time.sleep(.75)
             # We would play a trial here, with both intervals being .5 s long, and the isi being .25 s
-            for i in range(len(interface.alternatives)):
-                interface.set_border(i, 'Double', redraw=True)
-                interface.wait_ms(500)
-#                time.sleep(.5)
-                interface.set_border(i, 'Light', redraw=True)
-                interface.wait_ms(250)
+#            for i in range(len(interface.alternatives)):
+#                interface.set_border(i, 'Heavy', redraw=True)
+#                interface.wait_ms(500)
+##                time.sleep(.5)
+#                interface.set_border(i, 'Light', redraw=True)
+#                interface.wait_ms(250)
                 #time.sleep(.25)
             interface.show_Notify_Right(False)
             interface.show_Prompt(True, redraw=True)
+        elif key == chr(curses.KEY_MOUSE):
+            _, mx, my, _, mstate = curses.getmouse()
+            clicked = interface.hit_test_button(mx,my)
+            interface.update_Title_Center("Button {} is {}".format(clicked, mstate), True)
 
     # We are quitting. Let use know, and wait for final keypress to exit interface
     interface.update_Status_Left("")

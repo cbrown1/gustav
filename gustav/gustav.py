@@ -86,16 +86,7 @@ def run(experimentFile = None, subjectID = None, frontend = None, recordData = N
             exp.utils.log(exp, "Gustav cancelled at user request (Prompt for Experiment File)")
             return
 
-    if subjectID == None:
-        exp.subjID = exp.term.get_input(parent=None, title = "Gustav!", prompt = 'Enter a Subject ID:')
-        q = exp.quitKeys
-        q.append('')
-        if exp.subjID in q:
-            exp.utils.log(exp, "Gustav cancelled at user request (Prompt for Subject ID)")
-            return
-    else:
-        exp.subjID = str(subjectID)
-
+    exp.subjID = subjectID
     exp.experimentPath,exp.experimentFile = os.path.split(experimentFile)
     exp.experimentBase = os.path.splitext(exp.experimentFile)[0]
     exp.experimentFilePath = os.path.join(exp.experimentPath,exp.experimentFile)
@@ -103,6 +94,9 @@ def run(experimentFile = None, subjectID = None, frontend = None, recordData = N
     exp.experiment = __import__(exp.experimentBase)
 
     exp.experiment.setup( exp )
+
+    if not exp.subjID:
+        exp.utils.log(exp, "Warning: exp.subjID not assigned at startup. Be sure to set in setup.")
 
     exp.method_str = exp.method
     try:
@@ -124,11 +118,11 @@ def run(experimentFile = None, subjectID = None, frontend = None, recordData = N
         if not got_dataString:
             ret = exp.frontend.get_yesno(None, title = "Gustav!",
                     prompt = "exp.recordData == True, but no dataStrings were found so no data will be record data.\nAre you sure you want to continue?")
-            if not ret:
+            if ret:
+                exp.utils.log(exp, "WARNING: No data will be recorded!")
+            else:
                 exp.utils.log(exp, "Gustav cancelled at user request (Prompt to record data)")
                 return
-            else:
-                exp.utils.log(exp, "WARNING: No data will be recorded!")
     else:
         exp.utils.log(exp, "WARNING: No data will be recorded!")
     if exp.var.order == 'menu':
@@ -137,17 +131,17 @@ def run(experimentFile = None, subjectID = None, frontend = None, recordData = N
     if exp.run.gustav_is_go == False:
         exp.utils.log(exp, "Gustav cancelled at user request (Prompt to select conditions)")
         return
-    ret = exp.frontend.get_yesno(None, title = "Gustav!", prompt = "Ready to begin testing?")
-    if not ret:
-        exp.utils.log(exp, "Gustav cancelled at user request (Prompt to begin testing)")
-        return
 
-    exp.utils.update_time(exp.run)
-    if not os.path.isfile(exp.dataFile):
-        exp.utils.save_data(exp, 'header')
-    exp.utils.do_event(exp, 'pre_exp')
-    exp.run.trials_exp = 0
     exp.run.gustav_is_go = True
+    exp.utils.do_event(exp, 'pre_exp') # gustav_is_go can now be set to false in pre_exp to cancel
+    if not exp.run.gustav_is_go:
+        exp.utils.log(exp, "Gustav cancelled (via pre_exp)")
+    else:
+        exp.utils.update_time(exp.run)
+        if not os.path.isfile(exp.dataFile):
+            exp.utils.save_data(exp, 'header')
+        exp.run.trials_exp = 0
+
     while exp.run.gustav_is_go:
         if exp.var.order == 'prompt':
             exp.prompt_condition(exp)
@@ -167,6 +161,9 @@ def run(experimentFile = None, subjectID = None, frontend = None, recordData = N
                     exp.utils.do_event(exp, 'post_trial')
                     exp.run.trials_block += 1
                     exp.run.trials_exp += 1
+                    if not exp.run.gustav_is_go:
+                        exp.run.trial_on = False
+                        exp.run.block_on = False
 
             exp.utils.do_event(exp, 'post_block')
             exp.run.block += 1

@@ -67,7 +67,7 @@ def pre_exp(exp):
         exp.logString_post_exp = "\nExperiment ended: $name. Date: $date, Time: $time, Subject #: $subj\n"
         
     exp.run.block = exp.var.constant['startblock']-1
-        
+    
     if exp.run.block >= exp.run.nblocks - 1:
         exp.run.gustav_is_go = False
 

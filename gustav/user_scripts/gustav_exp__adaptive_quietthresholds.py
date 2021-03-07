@@ -35,6 +35,13 @@ def setup(exp):
     exp.comments = '''\
     '''
 
+    if not exp.subjID:
+        ret = input("Enter Subject ID (Or `\` to quit): ")
+        if ret == '\\':
+            exp.run.gustav_is_go = False
+        else:
+            exp.subjID = ret
+
     """EXPERIMENT VARIABLES
         There are 2 kinds of variables: factorial and ordered
 
@@ -146,7 +153,6 @@ def prompt_response(exp):
             exp.run.response = ret
             break
         elif ret in exp.quitKeys:
-            exp.run.block_on = False
             exp.run.gustav_is_go = False
             exp.var.dynamic['msg'] = "Cancelled by user"
             break

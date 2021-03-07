@@ -1,0 +1,100 @@
+# -*- coding: utf-8 -*-
+
+# A log file for Gustav
+
+Experiment started: _lateralization_. Date: 2021-03-07, Time: 13:05:16, Subject #: CI500
+
+ Block 1 of 4 started at 13:05:19; Condition: 1 ; frequency = 250 ; cue = ild
+ Trial 1, Response: 81.0
+ Trial 2, Response: 68.0
+ Trial 3, Response: 24.0
+ Trial 4, Response: 54
+ Trial 5, Response: 54
+ Block 1 of 4 ended at 13:06:44; Condition: 1 ; frequency = 250 ; cue = ild
+
+Experiment ended: _lateralization_. Date: 2021-03-07, Time: 13:06:44, Subject #: CI500
+Experiment started: _lateralization_. Date: 2021-03-07, Time: 13:07:51, Subject #: 500
+
+ Block 1 of 4 started at 13:07:53; Condition: 3 ; frequency = 4000 ; cue = ild
+ Trial 1, Response: 57.0
+ Trial 2, Response: 31.0
+ Trial 3, Response: 23.0
+ Trial 4, Response: 101.0
+ Trial 5, Response: 79.0
+ Trial 6, Response: 54.0
+ Trial 7, Response: 54.0
+ Trial 8, Response: 54.0
+ Trial 9, Response: 54.0
+ Trial 10, Response: 54.0
+ Trial 11, Response: 54.0
+ Trial 12, Response: 54.0
+ Trial 13, Response: 54.0
+ Trial 14, Response: 54.0
+ Trial 15, Response: 54.0
+ Block 1 of 4 ended at 13:09:50; Condition: 3 ; frequency = 4000 ; cue = ild
+
+ Block 2 of 4 started at 13:09:50; Condition: 4 ; frequency = 4000 ; cue = itd
+ Trial 16, Response: 54.0
+ Trial 17, Response: 54.0
+ Trial 18, Response: 54.0
+ Trial 19, Response: 54.0
+ Trial 20, Response: 54.0
+ Trial 21, Response: 54.0
+ Trial 22, Response: 54.0
+ Trial 23, Response: 54.0
+ Trial 24, Response: 54.0
+ Trial 25, Response: 54.0
+ Trial 26, Response: 54.0
+ Trial 27, Response: 54.0
+ Trial 28, Response: 54.0
+ Trial 29, Response: 54.0
+ Trial 30, Response: 54.0
+ Block 2 of 4 ended at 13:10:04; Condition: 4 ; frequency = 4000 ; cue = itd
+
+ Block 3 of 4 started at 13:10:04; Condition: 1 ; frequency = 250 ; cue = ild
+ Trial 31, Response: 54.0
+ Trial 32, Response: 54.0
+ Trial 33, Response: 54.0
+ Trial 34, Response: 54.0
+ Trial 35, Response: 54.0
+ Trial 36, Response: 54.0
+ Trial 37, Response: 54.0
+ Trial 38, Response: 54.0
+ Trial 39, Response: 54.0
+ Trial 40, Response: 54.0
+ Trial 41, Response: 54.0
+ Trial 42, Response: 54.0
+ Trial 43, Response: 54.0
+ Trial 44, Response: 54.0
+ Trial 45, Response: 54.0
+ Block 3 of 4 ended at 13:10:20; Condition: 1 ; frequency = 250 ; cue = ild
+
+ Block 4 of 4 started at 13:10:20; Condition: 2 ; frequency = 250 ; cue = itd
+ Trial 46, Response: 54.0
+ Trial 47, Response: 54.0
+ Trial 48, Response: 54.0
+ Trial 49, Response: 54.0
+ Trial 50, Response: 54.0
+ Trial 51, Response: 54.0
+ Trial 52, Response: 54.0
+ Trial 53, Response: 54.0
+ Trial 54, Response: 54.0
+ Trial 55, Response: 54.0
+ Trial 56, Response: 54.0
+ Trial 57, Response: 54.0
+ Trial 58, Response: 54.0
+ Trial 59, Response: 54.0
+ Trial 60, Response: 54.0
+ Block 4 of 4 ended at 13:10:32; Condition: 2 ; frequency = 250 ; cue = itd
+
+Experiment ended: _lateralization_. Date: 2021-03-07, Time: 13:10:32, Subject #: 500
+Experiment started: _lateralization_. Date: 2021-03-07, Time: 13:12:48, Subject #: 500
+
+ Block 1 of 4 started at 13:12:49; Condition: 2 ; frequency = 250 ; cue = itd
+ Trial 1, Response: 54.0
+ Trial 2, Response: 54.0
+ Trial 3, Response: 54.0
+ Trial 4, Response: 54.0
+ Block 1 of 4 ended at 13:12:54; Condition: 2 ; frequency = 250 ; cue = itd
+
+Experiment ended: _lateralization_. Date: 2021-03-07, Time: 13:12:54, Subject #: 500
