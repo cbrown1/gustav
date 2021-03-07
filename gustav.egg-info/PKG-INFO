@@ -1,23 +1,7 @@
 Metadata-Version: 1.2
 Name: gustav
 Version: 0.8.0
-Summary: Gustav: An event-based framework for psychophysical experiments
-
-    Gustav tries to handle all of the aspects of experimentation that are 
-    common across experiments (organizing and enumerating experimental 
-    variables, the psychophysical procedure, interacting with subjects, 
-    logging, saving data, etc.), and leaves to the experimenter the aspects 
-    that are unique to each experiment (stimulus generation and delivery, etc). 
-    
-    An experiment is represented by a Gustav experiment file, which is simply 
-    a python script that has various functions and properties specified. For 
-    example, the setup function is where many aspects of the experiment are 
-    set, such as the name of the experiment, where and how to save data, what 
-    the experimental variables and their levels are, and so on. The best way 
-    to understand how one works is to have a look at one. See the test_gustav 
-    python scripts in the user_scripts directory for more information.
-
-
+Summary: Gustav: An event-based framework for psychophysical experiments      Gustav tries to handle all of the aspects of experimentation that are      common across experiments (organizing and enumerating experimental      variables, the psychophysical procedure, interacting with subjects,      logging, saving data, etc.), and leaves to the experimenter the aspects      that are unique to each experiment (stimulus generation and delivery, etc).           An experiment is represented by a Gustav experiment file, which is simply      a python script that has various functions and properties specified. For      example, the setup function is where many aspects of the experiment are      set, such as the name of the experiment, where and how to save data, what      the experimental variables and their levels are, and so on. The best way      to understand how one works is to have a look at one. See the test_gustav      python scripts in the user_scripts directory for more information.  
 Home-page: https://github.com/cbrown1/gustav
 Author: Christopher Brown
 Author-email: cbrown1@pitt.edu

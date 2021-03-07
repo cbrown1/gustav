@@ -10,6 +10,7 @@ gustav.egg-info/dependency_links.txt
 gustav.egg-info/top_level.txt
 gustav/forms/__init__.py
 gustav/forms/lateralization.py
+gustav/forms/localization.py
 gustav/forms/nafc.py
 gustav/forms/rt.py
 gustav/forms/speech.py
@@ -21,4 +22,6 @@ gustav/methods/__init__.py
 gustav/methods/adaptive.py
 gustav/methods/constant.py
 gustav/methods/pest.py
+gustav/user_scripts/_quiet_thresholds__500.py
 gustav/user_scripts/gustav_exp__adaptive_quietthresholds.py
+gustav/user_scripts/gustav_exp__lateralization.py

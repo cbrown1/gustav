@@ -679,26 +679,6 @@ class Interface():
         if redraw: 
             self.redraw()
 
-    def update_Block_Prev(self, s, redraw=False):
-        """Update the Block Score text
-
-            redraw is a bool specifying whether to redraw window. 
-            A window redraw can also be set with update.
-        """
-        self.blockPrev_str = s
-        if redraw: 
-            self.redraw()
-
-    def update_Block_Vars(self, s, redraw=False):
-        """Update the Block Variables text
-
-            redraw is a bool specifying whether to redraw window. 
-            A window redraw can also be set with update.
-        """
-        self.blockVars_str = s
-        if redraw: 
-            self.redraw()
-
     def update_Trial_Info(self, s, redraw=False):
         """Update the Trial_Info text
 
@@ -716,6 +696,26 @@ class Interface():
             A window redraw can also be set with update.
         """
         self.blockCurr_str = s
+        if redraw: 
+            self.redraw()
+
+    def update_Block_Prev(self, s, redraw=False):
+        """Update the Block Score text
+
+            redraw is a bool specifying whether to redraw window. 
+            A window redraw can also be set with update.
+        """
+        self.blockPrev_str = s
+        if redraw: 
+            self.redraw()
+
+    def update_Block_Vars(self, s, redraw=False):
+        """Update the Block Variables text
+
+            redraw is a bool specifying whether to redraw window. 
+            A window redraw can also be set with update.
+        """
+        self.blockVars_str = s
         if redraw: 
             self.redraw()
 
