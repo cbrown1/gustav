@@ -1,5 +1,6 @@
 import sys
 import json
+import subprocess
 from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 
@@ -23,6 +24,8 @@ def api():
     client_request = dict(request.form)
     if client_request['type'] == "style":
         subject_id = str(datetime.timestamp(datetime.now()))
+        # Init gustav script
+        proc = subprocess.Popen(['python', 'test.py'])
         # Initialize new ID and return styling information
         Exp.setup(subject_id, port)
         Exp.initialize({'id': Exp.id})
