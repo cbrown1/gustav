@@ -12,6 +12,7 @@ class Interface():
     def __init__(self, alternatives=2, prompt='Choose an alternative', port=5050):
         self.prompt = prompt
         self.abort_prompt = "Experiment has been aborted."
+        self.stop_prompt = "Experiment completed, thank you for participating."
         self.alternatives = alternatives
         self.filedir = os.path.dirname(os.path.abspath(__file__))
         style_file = os.path.join(self.filedir, 'style.json')
@@ -149,7 +150,7 @@ class Interface():
     def destroy(self, archive=True, sleep=1):
         if os.path.exists(self.subjdir):
             if archive:
-                shutil.make_archive(f"{self.subjdir}.zip", 'zip', self.subjdir)
+                shutil.make_archive(f"{self.subjdir}", 'zip', self.subjdir)
                 print(f'Archived: {self.subjdir}.zip')
             print(f'Waiting for {sleep} s')
             time.sleep(sleep)
@@ -174,6 +175,25 @@ class Interface():
         self.response = output
         self.num_trial = 0
 
+    def stop(self, exp, prompt=None, archive=False, destroy=False, sleep=1):
+        if prompt is None:
+            prompt = self.stop_prompt
+        output = {
+          "type": "stop",
+          "message" : prompt
+        }
+        last_answer = self.find_last_answer()
+        print(f'Last answer: {last_answer}')
+        if last_answer is not None:
+            filename = os.path.join(self.appdir, last_answer['response_file'])
+        else:
+            filename = os.path.join(self.subjdir, f"g{exp.run.trials_block}_stop.json")
+        self.dump(output, filename)
+        if destroy:
+            self.destroy(archive=archive)
+        self.response = output
+        print('stop' + '-' * 30 + f'\n{self}')
+
     def find_last_answer(self):
         """
         Find last answer from client
@@ -187,15 +207,6 @@ class Interface():
         else:
             last_answer = None
         return last_answer
-
-    def stop(self, data):
-        self.read(data)
-        output = {
-          "type": "stop",
-          "message" : "Experiment completed, thank you for participating"
-        }
-        self.response = output
-        print('stop' + '-' * 30 + f'\n{self}')
 
     def pre_exp(self, data):
         self.read(data)

@@ -45,12 +45,10 @@ def setup(exp):
     The sounds will be played sequentially and you will be asked to choose the louder one
     Please press 1 or 2 to make your selection
     '''
-    exp.welcome = '''Welcome to the experiment.
+    exp.welcome = f'''Welcome to the experiment.
     Before we start the experiment please provide informed consent on the next page.
-
-    ID: {exp.subjID}
     '''
-    exp.welcome = "testing "
+    exp.welcome += "\nID: " + exp.subjID
 
 
     """EXPERIMENT VARIABLES
@@ -119,9 +117,9 @@ def setup(exp):
                     'val_ceil': 70,      # Ceiling
                     'val_floor_n': 3,    # Number of consecutive floor values to quit at
                     'val_ceil_n': 3,     # Number of consecutive ceiling values to quit at
-                    'run_n_trials': 0,   # Set to non-zero to run exactly that number of trials
+                    'run_n_trials': 3,   # Set to non-zero to run exactly that number of trials
                     'max_trials': 60,    # Maximum number of trials to run
-                    'vals_to_avg': 6,    # The number of values to average
+                    'vals_to_avg': 3,    # The number of values to average
                     'step': step,        # optional. A custom step function. Signature: def step(exp)
                     'max_level': 80,
                    }
@@ -283,9 +281,7 @@ def post_trial(exp):
 
 def post_exp(exp):
     print('POST EXP')
-    exp.interface.prompt1 = "Thanks for participating"
-    exp.interface.stop()
-    exp.interface.destroy(sleep=20)
+    exp.interface.stop(exp, prompt="Experiment completed, thank you for participating.", archive=True, destroy=True, sleep=10)
 
 def pre_block(exp):
     print(f'PRE BLOCK {exp.run.block}')

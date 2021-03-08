@@ -36,7 +36,7 @@ def api():
             # Set up experiment
             Exp.setup(subject_id, port)
             # Start gustav script
-            Exp.run()
+            Exp.run(sleep=1)
             # Initialize
             Exp.initialize({'id': Exp.id})
             client_request['id'] = Exp.id
