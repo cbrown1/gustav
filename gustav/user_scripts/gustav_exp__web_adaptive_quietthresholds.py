@@ -47,7 +47,10 @@ def setup(exp):
     '''
     exp.welcome = '''Welcome to the experiment.
     Before we start the experiment please provide informed consent on the next page.
+
+    ID: {exp.subjID}
     '''
+    exp.welcome = "testing "
 
 
     """EXPERIMENT VARIABLES
@@ -92,7 +95,7 @@ def setup(exp):
     exp.var.factorial['frequency']= [
                                     # '125',
                                     # '250',
-                                    '500',
+                                    # '500',
                                     '1000',
                                   ]
     def step(exp):
@@ -155,8 +158,14 @@ def setup(exp):
 """
 def pre_exp(exp):
     print('PRE EXP')
+    # Get ID and port
+    if ':' in exp.subjID:
+        exp.subjID, port = exp.subjID.split(':')
+    else:
+        port = 5050
+    print(f'Subject ID: {exp.subjID} port: {port}')
     # Only runs once before the whole thing
-    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","), port=5050)
+    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","), port=port)
     # Setup styling here (see style.json for more)
     exp.interface.style['logo'] = 'static/index.svg'
     exp.interface.style["--background_color"] = "#232323"
@@ -173,22 +182,35 @@ def pre_exp(exp):
     # Wait for initial client input
     # This will trigger if the main page is loaded in a browser
     # That's why the max timeout is larger than the default
-    ret = exp.interface.get_resp_pre_exp(max_timeout=3000)
-    if not ret:
-        exp.run.block_on = False
-        exp.run.gustav_is_go = False
-        exp.var.dynamic['msg'] = "Cancelled by user"
-    else:
-        exp.subjID = ret['id']
-        exp.interface.client_subjdir = f'{exp.interface.client_portdir}/{exp.subjID}'
-        exp.interface.info = exp.info
-        exp.interface.upper_left_text = f"Subject {exp.subjID}"
-        exp.interface.prompt1 = "Press space to begin"
-        exp.interface.prompt2 = "Which Interval?"
-        # Wait for info call
-        ret = exp.interface.get_resp()
-        fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
-        exp.interface.dump_info(fname)
+
+    exp.interface.id = exp.subjID
+    exp.interface.subjdir = os.path.join(exp.interface.expdir, exp.interface.id)
+    exp.interface.client_subjdir = f'{exp.interface.client_portdir}/{exp.subjID}'
+    exp.interface.info = exp.info
+    exp.interface.upper_left_text = f"Subject {exp.subjID}"
+    exp.interface.prompt1 = "Press space to begin"
+    exp.interface.prompt2 = "Which Interval?"
+    # Wait for info call
+    ret = exp.interface.get_resp()
+    fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
+    exp.interface.dump_info(fname)
+
+    # ret = exp.interface.get_resp_pre_exp(max_timeout=3000)
+    # if not ret:
+    #     exp.run.block_on = False
+    #     exp.run.gustav_is_go = False
+    #     exp.var.dynamic['msg'] = "Cancelled by user"
+    # else:
+    #     exp.subjID = ret['id']
+    #     exp.interface.client_subjdir = f'{exp.interface.client_portdir}/{exp.subjID}'
+    #     exp.interface.info = exp.info
+    #     exp.interface.upper_left_text = f"Subject {exp.subjID}"
+    #     exp.interface.prompt1 = "Press space to begin"
+    #     exp.interface.prompt2 = "Which Interval?"
+    #     # Wait for info call
+    #     ret = exp.interface.get_resp()
+    #     fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
+    #     exp.interface.dump_info(fname)
 
 def prompt_response(exp):
     """
@@ -262,6 +284,7 @@ def post_trial(exp):
 def post_exp(exp):
     print('POST EXP')
     exp.interface.prompt1 = "Thanks for participating"
+    exp.interface.stop()
     exp.interface.destroy(sleep=20)
 
 def pre_block(exp):
