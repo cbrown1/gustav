@@ -1,5 +1,6 @@
 import sys
 import json
+import time
 import subprocess
 from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
@@ -23,19 +24,24 @@ def api():
     # Forward request to gustav
     client_request = dict(request.form)
     if client_request['type'] == "style":
-        subject_id = str(datetime.timestamp(datetime.now()))
-        # Init gustav script
-        proc = subprocess.Popen(['python', 'test.py'])
-        # Initialize new ID and return styling information
-        Exp.setup(subject_id, port)
-        Exp.initialize({'id': Exp.id})
-        client_request['id'] = Exp.id
-        return jsonify(Exp.style)
-    # else:
-    #     if not hasattr(Exp, 'id'):
-    #         return jsonify({})
-    if hasattr(Exp, 'id'):
-        client_request['id'] = Exp.id
+        if Exp.is_running():
+            output = {
+                'type': 'ignore',
+                'message': 'Experiment in progress'
+            }
+            return jsonify(output)
+        else:
+            # Initialize new ID
+            subject_id = str(datetime.timestamp(datetime.now()))
+            # Set up experiment
+            Exp.setup(subject_id, port)
+            # Start gustav script
+            Exp.run()
+            # Initialize
+            Exp.initialize({'id': Exp.id})
+            client_request['id'] = Exp.id
+            return jsonify(Exp.style)
+    client_request['id'] = Exp.id
     Exp.send_request(client_request)
     # Get gustav response
     response = Exp.get_response()

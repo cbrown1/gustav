@@ -1,4 +1,5 @@
 {
+  "type": "style",
   "--background_color" : "#232323",
   "--text_color" : "#fff",
   "--main_color": "#ea4335",

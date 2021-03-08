@@ -146,7 +146,7 @@ class Interface():
             filename = os.path.join(self.subjdir, f"g{exp.run.trials_block}_trial.json")
         self.dump(output, filename)
 
-    def destroy(self, archive=False, sleep=1):
+    def destroy(self, archive=True, sleep=1):
         if os.path.exists(self.subjdir):
             if archive:
                 shutil.make_archive(f"{self.subjdir}.zip", 'zip', self.subjdir)
