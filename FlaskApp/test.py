@@ -1,6 +1,6 @@
 import time
 
-max = 100
+duration = 100
 sleep = 2
 running = True
 elapsed = 0
@@ -10,8 +10,15 @@ while running:
     print(f"Running for {elapsed} s")
     time.sleep(sleep)
     elapsed += sleep
-    if elapsed > max:
+    if elapsed >= duration:
         running = False
 with open("test_start.txt", "a+") as f:
     f.write("test finished")
 print(f"FIN")
+
+# Check if process is alive
+poll = proc.poll()
+if poll is None:
+    print('Alive')
+else:
+    print('Dead')

@@ -2,6 +2,7 @@ import os
 import json
 import time
 import shutil
+import subprocess
 
 from tools import select_audio, read_json
 
@@ -15,6 +16,11 @@ class Experiment(object):
         self.num_trial = 0
         self.port = port
         self.id = subject_id
+        self.script = 'gustav_exp__web_adaptive_quietthresholds.py'
+        file_dir = os.path.dirname(os.path.abspath(__file__))
+        script_dir = os.path.join(file_dir, '..', 'gustav', 'user_scripts')
+        self.script_dir = os.path.abspath(script_dir)
+        self.process = None
 
     def __repr__(self):
         return f"Psylab experiment\n  Port: {self.port}\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}\n  Sessions: {len(self.sessions)}"
@@ -26,6 +32,9 @@ class Experiment(object):
         os.makedirs(self.port_dir, exist_ok=True)
         self.subject_dir = os.path.join(self.port_dir, str(self.id))
         self.dir = os.path.join(self.port_dir, str(self.id))
+        if os.path.exists(self.dir):
+            self.abort(data, keep_dir=False)
+        os.makedirs(self.dir)
 
     def read(self, data):
         self.id = data['id']
@@ -36,6 +45,24 @@ class Experiment(object):
             self.sessions[self.id] = {**data, **self.sessions[self.id]}
         self.ses = self.sessions[self.id]
         print(self)
+
+    def run(self, sleep=3):
+        cmd = ['python', self.script, '-s', f'{self.id}:{self.port}']
+        # redirect output to a file in subject dir
+        self.process_out = os.path.join(self.dir, 'out.txt')
+        self.process = subprocess.Popen(cmd, cwd=self.script_dir, stdout=open(self.process_out, 'w'))
+        print(f'Running script: {self.script} | PID: {self.process.pid}')
+        time.sleep(sleep)
+
+    def is_running(self):
+        if self.process is None:
+            return False
+        else:
+            poll = self.process.poll()
+            if poll is None:
+                return True
+            else:
+                return False
 
     def send_request(self, data):
         """
@@ -87,8 +114,9 @@ class Experiment(object):
 
     def initialize(self, data):
         self.read(data)
-        self.abort(data, keep_dir=False)
-        os.makedirs(self.dir)
+        # if os.path.exists(self.dir):
+        #     self.abort(data, keep_dir=False)
+        # os.makedirs(self.dir)
         self.num_trial = 0
         self.response = read_json("static/style.json")
         self.style = read_json("static/style.json")
