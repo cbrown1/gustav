@@ -15,17 +15,21 @@ var abortBtn = function (){
 var mainColors = function (){
     let serverResponse = $.post(apiUrl, {'type': 'style'});
     serverResponse.done(function( data ) {
-        $(".logoArea img").attr("src",data.logo);
-        $("#welcome .contextArea p").html(data.message);
-        $("#agreeBtn").html(data.accept_btn);
-        $.each( serverResponse.responseJSON, function(key, val ) {
-            if (key == "loading_bars"){
-                $("body").addClass("loading_bars-"+val);
-            }else{
-                document.documentElement.style.setProperty(key, val);
-            }
-        });
-        performanceFeedback = data.performance_feedback;
+        if (data.type != 'style') {
+          $("#welcome").html(data.message);
+        } else {
+          $(".logoArea img").attr("src",data.logo);
+          $("#welcome .contextArea p").html(data.message);
+          $("#agreeBtn").html(data.accept_btn);
+          $.each( serverResponse.responseJSON, function(key, val ) {
+              if (key == "loading_bars"){
+                  $("body").addClass("loading_bars-"+val);
+              }else{
+                  document.documentElement.style.setProperty(key, val);
+              }
+          });
+          performanceFeedback = data.performance_feedback;
+        }
     });
 }
 // Get session id
