@@ -4,6 +4,7 @@ FlaskApp/dev
 FlaskApp/static/exp
 FlaskApp/static/audio/1*
 gustav/user_scripts/_*
+gustav/user_scripts/html/_*
 *.pyc
 
 # GitHub Pages
