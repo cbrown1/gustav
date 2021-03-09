@@ -13,6 +13,7 @@ var abortBtn = function (){
 }
 // Get styling information from the server
 var mainColors = function (){
+    $("#welcome .contextArea p").html('Please wait, initializing the experiment...');
     let serverResponse = $.post(apiUrl, {'type': 'style'});
     serverResponse.done(function( data ) {
         if (data.type != 'style') {

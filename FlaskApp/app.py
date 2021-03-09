@@ -1,12 +1,15 @@
+import sys
 import json
+import time
+import subprocess
 from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 
-from experiment import Experiment
+from gustavio import GustavIO
 
 
 app = Flask(__name__)
-Exp = Experiment()
+GIO = GustavIO()
 
 
 @app.route('/')
@@ -14,40 +17,44 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/nafc')
-def nfac():
-    return render_template('nafc.html')
-
-
 @app.route('/api', methods=['POST'])
 def api():
-    print(f"Received: {json.dumps(dict(request.form), indent=2)}")
+    print(f'Received: {json.dumps(dict(request.form), indent=2)}')
+    # Forward request to gustav
     client_request = dict(request.form)
-    if request.form['type'] == "style":
-        # Initialize new ID and return styling information
-        Exp.server_id = str(datetime.timestamp(datetime.now()))
-        Exp.initialize({'id': Exp.server_id})
-    elif request.form['type'] == "trial":
-        client_request['id'] = Exp.server_id
-        Exp.trial(client_request)
-    elif request.form['type'] == "answer":
-        client_request['id'] = Exp.server_id
-        print(client_request)
-        Exp.trial(client_request)
-    elif request.form['type'] == "stop":
-        client_request['id'] = Exp.server_id
-        Exp.stop(client_request)
-    elif request.form['type'] == "abort":
-        client_request['id'] = Exp.server_id
-        Exp.abort(client_request)
-    elif request.form['type'] == "info":
-        client_request['id'] = Exp.server_id
-        Exp.info(client_request)
-    Exp.dump(data=request.form, prefix='c')
-    print(f"Sending: {json.dumps(Exp.response, indent=2)}")
-    Exp.dump(prefix='s')
-    return jsonify(Exp.response)
+    # Loading home page
+    if client_request['type'] == "style":
+        if GIO.is_running():
+            url = '<a href=http://run.psylab.org/>To participate click here</a>'
+            output = {
+                'type': 'ignore',
+                'message': f'Experiment in progress...<br>{url}'
+            }
+            return jsonify(output)
+        else:
+            # Initialize new ID
+            subject_id = str(datetime.timestamp(datetime.now()))
+            # Set up experiment
+            GIO.setup(subject_id, port, gustav_script)
+            # Start gustav script
+            GIO.run(sleep=2)
+            # Initialize
+            GIO.initialize({'id': GIO.id})
+            client_request['id'] = GIO.id
+            return jsonify(GIO.style)
+    client_request['id'] = GIO.id
+    GIO.send_request(client_request)
+    # Get gustav response
+    response = GIO.get_response()
+    # response = GIO.style
+    print(f'Sending: {json.dumps(response, indent=2)}')
+    return jsonify(response)
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    if len(sys.argv) > 1:
+        port = 5050 + int(sys.argv[1])
+    else:
+        port = 5050
+    gustav_script = 'gustav_exp__adaptive_quietthresholds.py'
+    app.run(host='0.0.0.0', debug=True, port=port)

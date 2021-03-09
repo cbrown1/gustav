@@ -54,9 +54,9 @@ def generate_audio(filename="audio.wav", frequency=1000, duration=1000, level=30
 
 
 def cleanup():
-    for f in os.listdir('static/audio'):
+    for f in os.listdir('static/exp'):
         if f[0].isnumeric():
-            os.remove(os.path.join('static/audio', f))
+            os.remove(os.path.join('static/exp', f))
 
 
 if __name__ == "__main__":

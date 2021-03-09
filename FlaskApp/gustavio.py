@@ -4,28 +4,35 @@ import time
 import shutil
 import subprocess
 
-from tools import select_audio, read_json
+from tools import read_json
 
 
-class Experiment(object):
-    """Psylab Experiment"""
+class GustavIO(object):
+    """Gustav IO"""
     def __init__(self, subject_id="1", port=5050):
+        """
+        Initialize gustav input/output.
+        """
         self.root = 'static'
         self.out_dir = 'exp'
         self.sessions = {}
         self.num_trial = 0
         self.port = port
         self.id = subject_id
-        self.script = 'gustav_exp__web_adaptive_quietthresholds.py'
+        self.script = 'gustav_exp__adaptive_quietthresholds.py'
         file_dir = os.path.dirname(os.path.abspath(__file__))
-        script_dir = os.path.join(file_dir, '..', 'gustav', 'user_scripts')
+        script_dir = os.path.join(file_dir, '..', 'gustav', 'user_scripts', 'html')
         self.script_dir = os.path.abspath(script_dir)
         self.process = None
 
     def __repr__(self):
-        return f"Psylab experiment\n  Port: {self.port}\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}\n  Sessions: {len(self.sessions)}"
+        return f"Gustav IO\n  Port: {self.port}\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}"
 
-    def setup(self, subject_id="1", port=5050):
+    def setup(self, subject_id, port, script):
+        """
+        Set up subject id and port.
+        Create subject directory (deletes if it exists)
+        """
         self.id = subject_id
         self.port = port
         self.port_dir = os.path.join(self.root, self.out_dir, str(self.port))
@@ -114,84 +121,10 @@ class Experiment(object):
 
     def initialize(self, data):
         self.read(data)
-        # if os.path.exists(self.dir):
-        #     self.abort(data, keep_dir=False)
-        # os.makedirs(self.dir)
         self.num_trial = 0
         self.response = read_json("static/style.json")
         self.style = read_json("static/style.json")
         print('initialize' + '-' * 30 + f'\n{self}')
-
-    def abort(self, data, keep_dir=True):
-        self.read(data)
-        if os.path.exists(self.dir):
-            print('Session exists! Deleting...')
-            if len(os.listdir(self.dir)) > 1:
-                for f in os.listdir(self.dir):
-                    os.remove(os.path.join(self.dir, f))
-            if not keep_dir:
-                shutil.rmtree(self.dir)
-        output = {
-            'type': 'abort',
-            'message': "Experiment has been aborted."
-        }
-        self.response = output
-        self.num_trial = 0
-        print('abort' + '-' * 30 + f'\n{self}')
-
-    def trial(self, data):
-        self.read(data)
-        self.num_trial += 1
-        # Ask gustav for audio files
-        # For testing stop the experiment after 3 trials
-        if self.num_trial >= 5:
-            self.stop(data)
-        else:
-            if 'answer' in data:
-                if data['answer'] == "1":
-                    self.freq1 += 200
-                    self.freq2 += 200
-                else:
-                    self.freq1 -= 200
-                    self.freq2 -= 200
-            files = select_audio(self.freq1, self.freq2)
-            print("Frequency 1: {self.freq1} | 2: {self.freq2}")
-            names = [i.split('/')[-1].split('.')[0] for i in files]
-            audio = []
-            for i, (f, n) in enumerate(zip(files, names), start=1):
-                audio.append({'name': i, 'file': f, 'id': i})
-            output = {
-                        'type': 'trial',
-                        'lower_left_text': 'Trial: {}'.format(self.num_trial),
-                        'lower_right_text': f'Session ID: {self.id}',
-                        'upper_left_text': 'Psylab n-AFC Experiment | Quiet Thresholds',
-                        'items': audio,
-                        'prompt1': 'Press space to listen',
-                        'prompt2': 'Select a sound (press 1 or 2)',
-                        'answer': 1,
-                        'delay': 500,
-                        'next_delay': 2000,
-                      }
-            self.response = output
-            print('trial' + '-' * 30 + f'\n{self}')
-
-    def stop(self, data):
-        self.read(data)
-        output = {
-          "type": "stop",
-          "message" : "Experiment completed, thank you for participating"
-        }
-        self.response = output
-        print('stop' + '-' * 30 + f'\n{self}')
-
-    def info(self, data):
-        self.read(data)
-        output = {
-          "type": "info",
-          "message": "n-AFC Experiment | Quiet Thresholds"
-        }
-        self.response = output
-        print('info' + '-' * 30 + f'\n{self}')
 
     def dump(self, data=None, filename=None, prefix='', suffix=''):
         """Dump data to json file"""
