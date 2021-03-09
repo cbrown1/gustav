@@ -48,9 +48,35 @@ sudo apt-get install libsndfile1
 
 ## Raspberry PI Setup
 
+```
 sudo pacman -S gcc tmux python-pip python-numpy python-scipy python-flask python-requests python-matplotlib python-pandas
 sudo pacman -S fakeroot binutils make cmake patch yay python-wheel tk micro xclip mc
 
 pip install soundfile
 pip install git+https://github.com/cbrown1/psylab
-pip install git+https://github.com/kbsezginel/gustav
+
+# Install gustav
+cd ~
+git clone https://github.com/kbsezginel/gustav
+cd gustav
+pip install -e .
+
+# Run app.py on startup
+echo "[Desktop Entry]
+name=Start gustav_web
+Comment=Gustav main page
+Exec=./home/gustav/FlaskApp/start.sh
+Type=Application
+Categories=Accessory;
+StartupNotify=true" > gustav_web.desktop
+
+cp gustav_web.desktop ~/.config/autostart
+
+# Setup auto login
+sudo cp /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.bak
+sudo sed -i
+'s/\[Seat:\*\]/[Seat:\*]\nautologin-guest=false\nautologin-user=$USER\nautologin-user-timeout=0\n'
+/etc/lightdm/lightdm.conf
+sudo groupadd -r autologin
+sudo gpasswd -a $USER autologin
+```
