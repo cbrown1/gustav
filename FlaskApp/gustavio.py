@@ -54,7 +54,7 @@ class GustavIO(object):
         print(self)
 
     def run(self, sleep=3):
-        cmd = ['python', self.script, '-s', f'{self.id}:{self.port}']
+        cmd = ['python', '-u', self.script, '-s', f'{self.id}:{self.port}']
         # redirect output to a file in subject dir
         self.process_out = os.path.join(self.dir, 'out.txt')
         self.process = subprocess.Popen(cmd, cwd=self.script_dir, stdout=open(self.process_out, 'w'))
