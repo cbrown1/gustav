@@ -11,7 +11,7 @@ import numpy as np
 import soundfile as sf
 
 import gustav
-from gustav.forms import web as theForm
+from gustav.forms.html import nafc as theForm
 
 
 def setup(exp):
@@ -173,7 +173,7 @@ def pre_exp(exp):
     exp.interface.style["--button-border-playing"] = "6px"
     exp.interface.style["--corner-text-fs"] = "20px"
     exp.interface.style["message"] = exp.welcome.replace('\n', '<br>')
-    exp.interface.style["performance_feedback"] = True
+    exp.interface.style["performance_feedback"] = False
     exp.interface.feedback_duration = 500
     # Save styling information for the server
     exp.interface.dump_style()

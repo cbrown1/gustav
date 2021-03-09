@@ -6,7 +6,7 @@ import os, sys
 import numpy as np
 import time
 import gustav
-from gustav.forms import nafc as theForm
+from gustav.forms.curses import nafc as theForm
 import psylab                              # https://github.com/cbrown1/psylab
 import medussa as m                        # https://github.com/cbrown1/medussa
 
@@ -82,7 +82,7 @@ def setup(exp):
     """
     # TODO: for python 2.7, change these to ordered dicts, where name is the key
     # and the dict {type, levels} is the val
-    
+
     exp.var.factorial['frequency']= [
                                     '125',
                                     '250',
@@ -95,7 +95,7 @@ def setup(exp):
         exp.var.dynamic['value'] = max(exp.var.dynamic['value'], exp.var.dynamic['val_floor'])
         exp.var.dynamic['value'] = min(exp.var.dynamic['value'], exp.var.dynamic['val_ceil'])
 
-    
+
     exp.var.dynamic = { 'name': 'Level',     # Name of the dynamic variable
                     'units': 'dBSPL',    # Units of the dynamic variable
                     'alternatives': 2,   # Number of alternatives
@@ -113,7 +113,7 @@ def setup(exp):
                     'max_trials': 60,    # Maximum number of trials to run
                     'vals_to_avg': 6,    # The number of values to average
                     'step': step,        # optional. A custom step function. Signature: def step(exp)
-                    'max_level': 80, 
+                    'max_level': 80,
                    }
 
     """CONDITION PRESENTATION ORDER
@@ -162,7 +162,7 @@ def pre_trial(exp):
         This function gets called on every trial to generate the stimulus, and
         do any other processing you need. All settings and variables are
         available. For the current level of a variable, use
-        var.current['varname']. 
+        var.current['varname'].
     """
     exp.interface.update_Status_Right("Trial {:}".format(exp.run.trials_block), redraw=True)
     isi = np.zeros(int(psylab.signal.ms2samp(int(exp.user.isi),int(exp.user.fs))))
@@ -176,8 +176,8 @@ def pre_trial(exp):
         exp.stim.out = np.hstack((interval_sig, isi, interval_noi))
     else:
         exp.stim.out = np.hstack((interval_noi, isi, interval_sig))
-    
-    
+
+
 def present_trial(exp):
     #pass
     #m.play_array(stim.out,user.fs)

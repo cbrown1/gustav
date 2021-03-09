@@ -18,7 +18,7 @@ class Interface():
         style_file = os.path.join(self.filedir, 'style.json')
         with open(style_file) as f:
             self.style = json.load(f)
-        appdir = os.path.join(self.filedir, '..', '..', 'FlaskApp')
+        appdir = os.path.join(self.filedir, '..', '..', '..', 'FlaskApp')
         self.appdir = os.path.abspath(appdir)
         self.staticdir = os.path.join(self.appdir, 'static')
         self.expdir = os.path.join(self.appdir, 'static', 'exp', str(port))

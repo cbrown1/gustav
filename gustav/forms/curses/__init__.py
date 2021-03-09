@@ -19,3 +19,9 @@
 #
 # Comments and/or additions are welcome. Send e-mail to: cbrown1@pitt.edu.
 #
+
+from . import lateralization
+from . import localization
+from . import nafc
+from . import rt
+from . import speech
