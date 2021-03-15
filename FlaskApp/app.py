@@ -24,24 +24,30 @@ def api():
     client_request = dict(request.form)
     # Loading home page
     if client_request['type'] == "style":
+        # If a gustav process is already running check how long it has been running for
+        # If longer than 2 hours kill and restart
+        # If not display an experiment in progress message
         if GIO.is_running():
-            url = '<a href=http://run.psylab.org/>To participate click here</a>'
-            output = {
-                'type': 'ignore',
-                'message': f'Experiment in progress...<br>{url}'
-            }
-            return jsonify(output)
-        else:
-            # Initialize new ID
-            subject_id = str(datetime.timestamp(datetime.now()))
-            # Set up experiment
-            GIO.setup(subject_id, port, gustav_script)
-            # Start gustav script
-            GIO.run(sleep=2)
-            # Initialize
-            GIO.initialize({'id': GIO.id})
-            client_request['id'] = GIO.id
-            return jsonify(GIO.style)
+            td = datetime.now() - GIO.process_start_time
+            print(f'Gustav is running for {td} s')
+            if td > 120 * 60:
+                GIO.process.kill()
+                time.sleep(1)
+            else:
+                msg = f'Experiment in progress...<br>Time elapsed: {round(td / 60)} mins<br>'
+                msg += '<a href=http://run.psylab.org/>To participate click here</a>'
+                output = {'type': 'ignore', 'message': msg}
+                return jsonify(output)
+        # Initialize new ID
+        subject_id = str(datetime.timestamp(datetime.now()))
+        # Set up experiment
+        GIO.setup(subject_id, port, gustav_script)
+        # Start gustav script
+        GIO.run(sleep=2)
+        # Initialize
+        GIO.initialize({'id': GIO.id})
+        client_request['id'] = GIO.id
+        return jsonify(GIO.style)
     client_request['id'] = GIO.id
     GIO.send_request(client_request)
     # Get gustav response

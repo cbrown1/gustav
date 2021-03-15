@@ -3,6 +3,7 @@ import json
 import time
 import shutil
 import subprocess
+from datetime import datetime
 
 from tools import read_json
 
@@ -26,7 +27,7 @@ class GustavIO(object):
         self.process = None
 
     def __repr__(self):
-        return f"Gustav IO\n  Port: {self.port}\n  ID: {self.id}\n  Trial: {self.num_trial}\n  Directory: {self.dir}"
+        return f"Gustav IO\n  Port: {self.port}\n  ID: {self.id}\n  PID: {self.process.pid}\n  Directory: {self.dir}"
 
     def setup(self, subject_id, port, script):
         """
@@ -58,6 +59,7 @@ class GustavIO(object):
         # redirect output to a file in subject dir
         self.process_out = os.path.join(self.dir, 'out.txt')
         self.process = subprocess.Popen(cmd, cwd=self.script_dir, stdout=open(self.process_out, 'w'))
+        self.process_start_time = datetime.now()
         print(f'Running script: {self.script} | PID: {self.process.pid}')
         time.sleep(sleep)
 
