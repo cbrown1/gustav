@@ -28,13 +28,12 @@ def api():
         # If longer than 2 hours kill and restart
         # If not display an experiment in progress message
         if GIO.is_running():
-            td = datetime.now() - GIO.process_start_time
-            print(f'Gustav is running for {td} s')
+            td = (datetime.now() - GIO.process_start_time).seconds
+            print(f'Gustav {GIO.process.pid} has been running for {td} s')
             if td > 120 * 60:
-                GIO.process.kill()
-                time.sleep(1)
+                GIO.kill()
             else:
-                msg = f'Experiment in progress...<br>Time elapsed: {round(td / 60)} mins<br>'
+                msg = f'Experiment in progress...<br>Time elapsed: {int(td / 60)} mins and {td % 60} seconds<br>'
                 msg += '<a href=http://run.psylab.org/>To participate click here</a>'
                 output = {'type': 'ignore', 'message': msg}
                 return jsonify(output)

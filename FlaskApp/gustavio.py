@@ -73,6 +73,19 @@ class GustavIO(object):
             else:
                 return False
 
+    def kill(self):
+        """
+        Kill Gustav process
+        """
+        pid = str(self.process.pid)
+        print(f'Killing gustav script pid: {pid}')
+        self.process.kill()
+        out = subprocess.run(f'kill {pid}', shell=True, capture_output=True, text=True)
+        if out.returncode != 0:
+            print(f'Process {pid} does not exist : ', out.stderr)
+        else:
+            print(f'Process {pid} killed')
+
     def send_request(self, data):
         """
         Send request to gustav.
