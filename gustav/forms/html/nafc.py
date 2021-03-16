@@ -22,6 +22,9 @@ class Interface():
         self.appdir = os.path.abspath(appdir)
         self.staticdir = os.path.join(self.appdir, 'static')
         self.expdir = os.path.join(self.appdir, 'static', 'exp', str(port))
+        os.makedirs(self.expdir, exist_ok=True)
+        self.archivedir = os.path.join(self.appdir, 'static', 'exp', 'archive')
+        os.makedirs(self.archivedir, exist_ok=True)
         self.client_portdir = f'static/exp/{port}'
         self.sessions = {}
         self.io = {}
@@ -78,7 +81,7 @@ class Interface():
 
             return ret
         except:
-            self.destroy()
+            self.destroy(tag='no_response')
             raise Exception('Error getting input')
 
     def parse_resp(self, resp):
@@ -147,10 +150,13 @@ class Interface():
             filename = os.path.join(self.subjdir, f"g{exp.run.trials_block}_trial.json")
         self.dump(output, filename)
 
-    def destroy(self, archive=True, sleep=1):
+    def destroy(self, archive=True, sleep=1, tag=''):
         if os.path.exists(self.subjdir):
             if archive:
-                shutil.make_archive(f"{self.subjdir}", 'zip', self.subjdir)
+                if tag != '':
+                    tag = '_' + tag
+                fname = os.path.join(self.archivedir, f'{self.id}{tag}')
+                shutil.make_archive(fname, 'zip', self.subjdir)
                 print(f'Archived: {self.subjdir}.zip')
             print(f'Waiting for {sleep} s')
             time.sleep(sleep)
@@ -171,7 +177,7 @@ class Interface():
         self.dump(output, filename)
         print('abort\n' + '-' * 30 + f'\n{self}')
         if destroy:
-            self.destroy(archive=archive)
+            self.destroy(archive=archive, tag='abort')
         self.response = output
         self.num_trial = 0
 
@@ -190,7 +196,7 @@ class Interface():
             filename = os.path.join(self.subjdir, f"g{exp.run.trials_block}_stop.json")
         self.dump(output, filename)
         if destroy:
-            self.destroy(archive=archive)
+            self.destroy(archive=archive, tag='stop')
         self.response = output
         print('stop' + '-' * 30 + f'\n{self}')
 
