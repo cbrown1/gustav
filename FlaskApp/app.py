@@ -13,9 +13,43 @@ GIO = GustavIO()
 
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def home():
+    return render_template('home.html')
 
+@app.route('/setup')
+def setup():
+    return render_template('setup.html')
+
+@app.route('/nafc')
+def nafc():
+    return render_template('nafc.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    client_request = dict(request.form)
+    response = GIO.login(client_request)
+    return jsonify(response)
+
+@app.route('/change_ports', methods=['POST'])
+def change_ports():
+    # Change max ports and base port here
+    client_request = dict(request.form)
+    GIO.max_ports = client_request['max_ports']
+    GIO.base_port = client_request['base_port']
+    print(f'Changed ports | base: {GIO.base_port} max: {GIO.max_ports}')
+    return jsonify({})
+
+@app.route('/homeapi', methods=['POST'])
+def homeapi():
+    client_request = dict(request.form)
+    response = GIO.get_experiments()
+    return jsonify(response)
+
+@app.route('/setupapi', methods=['POST'])
+def setupapi():
+    client_request = dict(request.form)
+    response = GIO.get_setup()
+    return jsonify(response)
 
 @app.route('/api', methods=['POST'])
 def api():

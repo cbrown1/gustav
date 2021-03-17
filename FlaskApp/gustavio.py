@@ -25,9 +25,14 @@ class GustavIO(object):
         script_dir = os.path.join(file_dir, '..', 'gustav', 'user_scripts', 'html')
         self.script_dir = os.path.abspath(script_dir)
         self.process = None
+        self.dir = None
 
     def __repr__(self):
-        return f"Gustav IO\n  Port: {self.port}\n  ID: {self.id}\n  PID: {self.process.pid}\n  Directory: {self.dir}"
+        if self.process is None:
+            pid = None
+        else:
+            pid = self.process.pid
+        return f"Gustav IO\n  Port: {self.port}\n  ID: {self.id}\n  PID: {pid}\n  Directory: {self.dir}"
 
     def setup(self, subject_id, port, script):
         """
@@ -140,6 +145,23 @@ class GustavIO(object):
         self.response = read_json("static/style.json")
         self.style = read_json("static/style.json")
         print('initialize' + '-' * 30 + f'\n{self}')
+
+    def login(self, data):
+        print(f'Login: {data}')
+        if data['username'] == 'gustav' and data['password'] == 'test':
+            return 'true'
+        else:
+            return 'false'
+
+    def get_experiments(self):
+        exps = self.load('experiments.json')
+        print('get_experiments' + '-' * 30 + f'\n{self}')
+        return exps
+
+    def get_setup(self):
+        exps = self.load('setup.json')
+        print('get_setup' + '-' * 30 + f'\n{self}')
+        return exps
 
     def dump(self, data=None, filename=None, prefix='', suffix=''):
         """Dump data to json file"""
