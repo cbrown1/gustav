@@ -1,6 +1,8 @@
 var apiUrl = "/api";
 let correctAnswer = 0;
 let userSelection = 0;
+let trialPause = false;
+let trialPauseDuration = 1000;
 let performanceFeedback = true;
 var abortBtn = function (){
     $('.top-right').on("click",function() {
@@ -29,7 +31,11 @@ var mainColors = function (){
                   document.documentElement.style.setProperty(key, val);
               }
           });
+          // Display correct/wrong answer after user input
           performanceFeedback = data.performance_feedback;
+          // Pause between trials to wait for user input
+          trialPause = data.trial_pause;
+          trialPauseDuration = data.trial_pause_dur;
         }
     });
 }
@@ -268,7 +274,12 @@ var getJsonApi = function (formdata = {'type': 'trial', 'id': getID()}){
                     .attr("data-next-delay",data.next_delay)
                     .attr("data-answer",data.answer);
                 abortBtn();
-
+                // If not the first trial automatically play the audio
+                if(data.trial > 0 && !trialPause){
+                    setTimeout(function (){
+                        $("#testArea").find("button:not(.listened)").eq(0).click();
+                    }, trialPauseDuration);
+                }
                 break;
             case "stop":
                 var changeArea = function (){

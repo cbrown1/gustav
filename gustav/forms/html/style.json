@@ -13,6 +13,8 @@
   "--button_size" : "85px",
   "loading_bars": false,
   "performance_feedback": true,
+  "trial_pause": false,
+  "trial_pause_dur": 1000,
 
   "--success_border": "#249a41",
   "--error_border": "#ea4335",
