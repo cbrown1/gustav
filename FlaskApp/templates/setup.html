@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PSYLAB Setup</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" type="image/jpg" href="static/favicon.ico"/>
+    <link rel="stylesheet" href="static/home.css">
+</head>
+<body>
+<section class="usersPages">
+    <div class="loginFormArea">
+
+        <form action="">
+            <figure>
+                <img src="static/pitt_logo.png">
+
+            </figure>
+            <input type="text" id="userName" placeholder="Username" name="username"><br><br>
+
+            <input type="password" id="pass" placeholder="Password" name="password"><br><br>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div class="observingPage" style="display: none"></div>
+    <div class="observingBottom" style="display: none">
+        <div>
+            <span>Max ports: <input type="number" name="max-ports"></span>
+            <span>Base ports: <input type="number" name="base-ports"></span>
+        </div>
+    </div>
+</section>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="static/home.js"></script>
+</body>
+</html>
