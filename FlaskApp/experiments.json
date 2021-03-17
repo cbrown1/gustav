@@ -3,7 +3,7 @@
     {
       "description": "Quiet thresholds for pure tones",
       "title": "n-AFC",
-      "url": "http://run.psylab.org:5051/nafc",
+      "url": "http://74.109.252.140:5051/nafc",
       "ready": true
     },
     {
