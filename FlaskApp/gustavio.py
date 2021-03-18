@@ -24,6 +24,8 @@ class GustavIO(object):
         self.sessions = {}
         self.num_trial = 0
         self.port = port
+        self.max_ports = 10
+        self.base_port = 5050
         self.id = subject_id
         self.script = 'gustav_exp__adaptive_quietthresholds.py'
         file_dir = os.path.dirname(os.path.abspath(__file__))
@@ -31,6 +33,9 @@ class GustavIO(object):
         self.script_dir = os.path.abspath(script_dir)
         self.process = None
         self.dir = None
+        self.running_file = os.path.join(file_dir, 'running.json')
+        self.str_time = None
+        self.update_running()
 
     def __repr__(self):
         if self.process is None:
@@ -70,8 +75,32 @@ class GustavIO(object):
         self.process_out = os.path.join(self.dir, 'out.txt')
         self.process = subprocess.Popen(cmd, cwd=self.script_dir, stdout=open(self.process_out, 'w'))
         self.process_start_time = datetime.now()
+        self.str_time = self.process_start_time.strftime("%m/%d/%Y, %H:%M:%S")
         print(f'Running script: {self.script} | PID: {self.process.pid}')
+        new_run = {'pid': self.process.pid,
+                   'port': self.port,
+                   'script': self.script,
+                   'time': self.str_time,
+                   'sid': self.id}
+        self.update_running(append=new_run)
         time.sleep(sleep)
+
+    def update_running(self, append=None, remove=None):
+        if not os.path.exists(self.running_file):
+            self.running = []
+            with open(self.running_file, 'w') as f:
+                json.dump({'ports': [self.port], 'subjects': []}, f)
+        else:
+            with open(self.running_file, 'r') as f:
+                self.running = json.load(f)
+            if append is not None:
+                self.running['subjects'].append(append)
+                with open(self.running_file, 'w') as f:
+                    json.dump(self.running, f)
+            if remove is not None:
+                self.running['subjects'] = [r for r in self.running['subjects'] if r['pid'] != remove['pid']]
+                with open(self.running_file, 'w') as f:
+                    json.dump(self.running, f)
 
     def is_running(self):
         if self.process is None:
@@ -91,6 +120,7 @@ class GustavIO(object):
         print(f'Killing gustav script pid: {pid}')
         self.process.kill()
         out = subprocess.run(f'kill {pid}', shell=True, capture_output=True, text=True)
+        self.update_running(remove={'pid': pid})
         if out.returncode != 0:
             print(f'Process {pid} does not exist : ', out.stderr)
         else:
@@ -161,7 +191,8 @@ class GustavIO(object):
     def get_experiments(self):
         exps = []
         gustav_exp__adaptive_quietthresholds.setup(exp)
-        url = 'http://74.109.252.140:5051/nafc'
+        # url = 'http://74.109.252.140:5051/nafc'
+        url = '/nafc'
         e = {'title': exp.title, 'description': exp.note, 'url': url, 'ready': True}
         exps.append(e)
         # exps = self.load('experiments.json')
@@ -169,9 +200,18 @@ class GustavIO(object):
         return {'experiments': exps}
 
     def get_setup(self):
-        exps = self.load('setup.json')
+        # exps = self.load('setup.json')
+        sbj = []
+        for r in self.running['subjects']:
+            sbj.append({'id': r['sid'], 'port': r['port'], 'time': r['time']})
+        # sbj = {'id': self.id, 'port': self.port, 'time': self.str_time}
+        exp = {'title': 'n-AFC', 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
+        data = {'experiments': [exp],
+                'max_ports': self.max_ports,
+                'base_port': self.base_port,
+                }
         print('get_setup' + '-' * 30 + f'\n{self}')
-        return exps
+        return data
 
     def dump(self, data=None, filename=None, prefix='', suffix=''):
         """Dump data to json file"""
