@@ -7,6 +7,11 @@ from datetime import datetime
 
 from tools import read_json
 
+from gustav.utils import exp
+from gustav.user_scripts.html import gustav_exp__adaptive_quietthresholds
+# import pkgutil
+# pkgutil.iter_modules(html.__path__))
+
 
 class GustavIO(object):
     """Gustav IO"""
@@ -154,9 +159,14 @@ class GustavIO(object):
             return 'false'
 
     def get_experiments(self):
-        exps = self.load('experiments.json')
-        print('get_experiments' + '-' * 30 + f'\n{self}')
-        return exps
+        exps = []
+        gustav_exp__adaptive_quietthresholds.setup(exp)
+        url = 'http://74.109.252.140:5051/nafc'
+        e = {'title': exp.title, 'description': exp.note, 'url': url, 'ready': True}
+        exps.append(e)
+        # exps = self.load('experiments.json')
+        print('get_experiments' + '-' * 30 + f'\n{exps}')
+        return {'experiments': exps}
 
     def get_setup(self):
         exps = self.load('setup.json')

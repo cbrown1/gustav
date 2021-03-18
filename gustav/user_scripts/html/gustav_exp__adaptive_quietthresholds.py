@@ -15,7 +15,7 @@ from gustav.forms.html import nafc as theForm
 
 
 def setup(exp):
-    print(f'SETUP')
+    print(f'n-AFC setup')
     # setup gets called before the experiment begins
 
     # General Experimental Variables
@@ -36,6 +36,7 @@ def setup(exp):
     exp.cacheTrials = False             # Currently unused
     exp.validKeys = '1,2';              # comma-delimited list of valid responses
     exp.quitKey = '/'
+    exp.title = 'n-AFC'
     exp.note = "Quiet thresholds for pure tones"
     exp.comments = '''\
     '''
