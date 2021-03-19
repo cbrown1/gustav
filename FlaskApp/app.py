@@ -10,9 +10,6 @@ from flask import Flask, render_template, redirect, url_for, request, jsonify
 from gustavio import GustavIO
 
 
-app = Flask(__name__)
-
-
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -117,4 +114,5 @@ def main():
 
     GIO = GustavIO(getpid(), port=args.port, local=args.local)
     print(GIO)
+    app = Flask(__name__)
     app.run(host='0.0.0.0', debug=args.debug, port=args.port)
