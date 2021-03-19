@@ -175,6 +175,7 @@ def pre_exp(exp):
     exp.interface.style["--corner-text-fs"] = "20px"
     exp.interface.style["message"] = exp.welcome.replace('\n', '<br>')
     exp.interface.style["performance_feedback"] = True
+    exp.interface.style["trial_pause"] = False
     exp.interface.feedback_duration = 500
     # Save styling information for the server
     exp.interface.dump_style()
@@ -256,6 +257,8 @@ def post_trial(exp):
     # Updates the buttons according to correct answer
     # this is handled on the server side
     print('POST TRIAL')
+    if not exp.interface.style["trial_pause"]:
+        exp.interface.prompt1 = ""
     if exp.run.gustav_is_go:
         correct = False
         if str(exp.var.dynamic['correct']).lower() == int(exp.run.response):
