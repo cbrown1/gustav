@@ -75,7 +75,7 @@ def api():
         # Initialize new ID
         subject_id = str(datetime.timestamp(datetime.now()))
         # Set up experiment
-        GIO.setup(subject_id, port)
+        GIO.setup(subject_id, args.port)
         # Start gustav script
         GIO.run(sleep=2)
         # Initialize
@@ -103,14 +103,14 @@ if __name__ == '__main__':
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # Optional arguments
-    parser.add_argument('--port', '-p', default=5050, type=int, metavar='', nargs=1,
+    parser.add_argument('--port', '-p', default=5050, type=int, metavar='',
                         help="Port number (default: 5050)")
     parser.add_argument('--local', '-l', action='store_true', default=False,
                         help="Run locally at 0.0.0.0 (default: false)")
     parser.add_argument('--debug', '-d', action='store_true', default=True,
                         help="Debug mode (default: true)")
     args = parser.parse_args()
-
+    print(args.port, type(args.port))
     GIO = GustavIO(getpid(), port=args.port, local=args.local)
     print(GIO)
     app.run(host='0.0.0.0', debug=args.debug, port=args.port)
