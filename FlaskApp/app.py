@@ -1,6 +1,7 @@
 import sys
 import json
 import time
+import argparse
 import subprocess
 from os import getpid
 from datetime import datetime
@@ -91,11 +92,29 @@ def api():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        port = 5050 + int(sys.argv[1])
-    else:
-        port = 5050
+    port = 5050
+    local = False
 
-    GIO = GustavIO(getpid(), port=port, local=True)
+def main():
+    parser = argparse.ArgumentParser(
+        description="""
+    =================================================
+    GUSTAV server application........................
+    =================================================
+        """,
+        epilog="""
+        """,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    # Optional arguments
+    parser.add_argument('--port', '-p', default=5050, type=int, metavar='', nargs=1,
+                        help="Port number (default: 5050)")
+    parser.add_argument('--local', '-l', action='store_true', default=False,
+                        help="Run locally at 0.0.0.0 (default: false)")
+    parser.add_argument('--debug', '-d', action='store_true', default=True,
+                        help="Debug mode (default: true)")
+    args = parser.parse_args()
+
+    GIO = GustavIO(getpid(), port=args.port, local=args.local)
     print(GIO)
-    app.run(host='0.0.0.0', debug=True, port=port)
+    app.run(host='0.0.0.0', debug=args.debug, port=args.port)
