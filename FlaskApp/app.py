@@ -2,6 +2,7 @@ import sys
 import json
 import time
 import subprocess
+from os import getpid
 from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 
@@ -9,7 +10,6 @@ from gustavio import GustavIO
 
 
 app = Flask(__name__)
-GIO = GustavIO()
 
 
 @app.route('/')
@@ -74,7 +74,7 @@ def api():
         # Initialize new ID
         subject_id = str(datetime.timestamp(datetime.now()))
         # Set up experiment
-        GIO.setup(subject_id, port, gustav_script)
+        GIO.setup(subject_id, port)
         # Start gustav script
         GIO.run(sleep=2)
         # Initialize
@@ -95,5 +95,7 @@ if __name__ == '__main__':
         port = 5050 + int(sys.argv[1])
     else:
         port = 5050
-    gustav_script = 'gustav_exp__adaptive_quietthresholds.py'
+
+    GIO = GustavIO(getpid(), port=port, local=True)
+    print(GIO)
     app.run(host='0.0.0.0', debug=True, port=port)

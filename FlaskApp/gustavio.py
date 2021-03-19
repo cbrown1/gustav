@@ -5,20 +5,22 @@ import shutil
 import subprocess
 from datetime import datetime
 
+import psutil
+import pkgutil
+
 from tools import read_json
 
 from gustav.utils import exp
 from gustav.user_scripts.html import gustav_exp__adaptive_quietthresholds
-# import pkgutil
-# pkgutil.iter_modules(html.__path__))
 
 
 class GustavIO(object):
     """Gustav IO"""
-    def __init__(self, subject_id="1", port=5050):
+    def __init__(self, server_pid, subject_id="1", port=5050, experiment='', local=False):
         """
         Initialize gustav input/output.
         """
+        self.server_pid = server_pid
         self.root = 'static'
         self.out_dir = 'exp'
         self.sessions = {}
@@ -27,24 +29,34 @@ class GustavIO(object):
         self.max_ports = 10
         self.base_port = 5050
         self.id = subject_id
-        self.script = 'gustav_exp__adaptive_quietthresholds.py'
+        # Read experiments as submodule
+        # Check the experiment script if the experiment is available (exp.ready = True)
+        self.experiment = 'gustav_exp__adaptive_quietthresholds'
+        self.script = f'{self.experiment}.py'
         file_dir = os.path.dirname(os.path.abspath(__file__))
         script_dir = os.path.join(file_dir, '..', 'gustav', 'user_scripts', 'html')
         self.script_dir = os.path.abspath(script_dir)
         self.process = None
         self.dir = None
-        self.running_file = os.path.join(file_dir, 'running.json')
         self.str_time = None
+        self.running_file = os.path.join(file_dir, 'running.json')
+        if self.port == self.base_port and os.path.exists(self.running_file):
+            os.remove('running.json')
         self.update_running()
+        if local:
+            self.url = 'http://0.0.0.0'
+        else:
+            self.url = 'http://74.109.252.140'
+
 
     def __repr__(self):
         if self.process is None:
             pid = None
         else:
             pid = self.process.pid
-        return f"Gustav IO\n  Port: {self.port}\n  ID: {self.id}\n  PID: {pid}\n  Directory: {self.dir}"
+        return f"Gustav IO\n  Server PID: {self.server_pid} Port: {self.port}\n  ID: {self.id}\n  Gustav PID: {pid}\n  Directory: {self.dir}"
 
-    def setup(self, subject_id, port, script):
+    def setup(self, subject_id, port):
         """
         Set up subject id and port.
         Create subject directory (deletes if it exists)
@@ -89,18 +101,23 @@ class GustavIO(object):
         if not os.path.exists(self.running_file):
             self.running = []
             with open(self.running_file, 'w') as f:
-                json.dump({'ports': [self.port], 'subjects': []}, f)
+                json.dump({'ports': {self.port: self.server_pid}, 'subjects': []}, f)
         else:
             with open(self.running_file, 'r') as f:
                 self.running = json.load(f)
+            running = {'ports': {}, 'subjects': []}
+            for p in self.running['ports']:
+                running['ports'][int(p)] = int(self.running['ports'][p])
+            for s in self.running['subjects']:
+                running['subjects'].append(s)
+            self.running = running
+            self.running['ports'][self.port] = self.server_pid
             if append is not None:
                 self.running['subjects'].append(append)
-                with open(self.running_file, 'w') as f:
-                    json.dump(self.running, f)
             if remove is not None:
                 self.running['subjects'] = [r for r in self.running['subjects'] if r['pid'] != remove['pid']]
-                with open(self.running_file, 'w') as f:
-                    json.dump(self.running, f)
+            with open(self.running_file, 'w') as f:
+                json.dump(self.running, f)
 
     def is_running(self):
         if self.process is None:
@@ -189,11 +206,42 @@ class GustavIO(object):
             return 'false'
 
     def get_experiments(self):
+        # Get running processes
+        procs = self.get_processes()
+        # Kill if no activity
+
+        # Get running servers
+        self.update_running()
+        exp_ports = [int(p) for p in self.running['ports'] if int(p) != self.base_port]
+        print(f'Exp ports: {exp_ports}')
+        port_pids = self.running['ports'].values()
+        print(f'Port pids: {port_pids}')
+        print(f'procs: {procs}')
+        running_ports = [pt for pt, pd in self.running['ports'].items() if pd in port_pids]
+        print(f'Running ports: {running_ports} Total processes: {len(procs)}')
+        # Check ifthe gustav process are running
+        used_ports = [s['port'] for s in self.running['subjects'] if int(s['pid']) in procs]
+        print(f'Used ports: {used_ports}')
+        avail_ports = [p for p in exp_ports if p not in used_ports and p in running_ports]
+        print(f'Avail ports: {avail_ports}')
+        if len(avail_ports) == 0:
+            url, ready = '', False
+            print('No ports available!')
+        else:
+            port = min(avail_ports)
+            print(f'{len(avail_ports)} ports available, selected {port}')
+            url = f'{self.url}:{port}/nafc'
+            ready = True
+        # url = 'http://74.109.252.140:5051/nafc'
+        # url = '/nafc'
+        # Get available experiments
         exps = []
         gustav_exp__adaptive_quietthresholds.setup(exp)
-        # url = 'http://74.109.252.140:5051/nafc'
-        url = '/nafc'
-        e = {'title': exp.title, 'description': exp.note, 'url': url, 'ready': True}
+        # html_exps = list(pkgutil.iter_modules(html.__path__)))
+        # Load all available experiments
+        # exp.experiment = __import__(exp.experimentBase)
+        # exp.experiment.setup( exp )
+        e = {'title': exp.title, 'description': exp.note, 'url': url, 'ready': ready}
         exps.append(e)
         # exps = self.load('experiments.json')
         print('get_experiments' + '-' * 30 + f'\n{exps}')
@@ -228,3 +276,18 @@ class GustavIO(object):
         with open(filename, "r") as f:
             data = json.load(f)
         return data
+
+    def get_processes(self, name='python'):
+        procs = []
+        for proc in psutil.process_iter():
+            try:
+                # Get process name & pid from process object.
+                processName = proc.name()
+                processID = proc.pid
+                processTime = proc.create_time()
+                if name in processName:
+                    print(f'{processName} {processID} {processTime}')
+                    procs.append(processID)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+        return procs
