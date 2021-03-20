@@ -210,7 +210,10 @@ class GustavIO(object):
 
     def login(self, data):
         print(f'Login: {data}')
-        pwds = self.load('pwd.json')
+        if not os.path.exists('pwd.json'):
+            pwds = self.load('pwd_test.json')
+        else:
+            pwds = self.load('pwd.json')
         for pwd in pwds:
             if data['username'] == pwd['username'] and data['password'] == pwd['password']:
                 return 'true'
