@@ -78,6 +78,7 @@ class Interface():
                             print(f'Reached max load attempts: {max_load_attempts}, ignoring out')
                             self.checked.append(out)
                             load_attempt = 0
+                time.sleep(sleep)
 
             return ret
         except:
