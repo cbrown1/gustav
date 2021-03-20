@@ -41,6 +41,7 @@ class GustavIO(object):
         self.str_time = None
         self.running_file = os.path.join(file_dir, 'running.json')
         if self.port == self.base_port and os.path.exists(self.running_file):
+            print('Removing running.json')
             os.remove('running.json')
         self.update_running()
         if local:
@@ -98,6 +99,7 @@ class GustavIO(object):
         time.sleep(sleep)
 
     def update_running(self, append=None, remove=None):
+        pids = self.get_processes(verbose=False)
         if not os.path.exists(self.running_file):
             self.running = []
             with open(self.running_file, 'w') as f:
@@ -106,11 +108,16 @@ class GustavIO(object):
             with open(self.running_file, 'r') as f:
                 self.running = json.load(f)
             running = {'ports': {}, 'subjects': []}
+
             for p in self.running['ports']:
-                running['ports'][int(p)] = int(self.running['ports'][p])
+                if int(self.running['ports'][p]) in pids:
+                    running['ports'][int(p)] = int(self.running['ports'][p])
+
             for s in self.running['subjects']:
-                running['subjects'].append(s)
+                if int(s['pid']) in pids:
+                    running['subjects'].append(s)
             self.running = running
+
             self.running['ports'][self.port] = self.server_pid
             if append is not None:
                 self.running['subjects'].append(append)
@@ -129,19 +136,22 @@ class GustavIO(object):
             else:
                 return False
 
-    def kill(self):
+    def kill(self, pid=None):
         """
         Kill Gustav process
         """
-        pid = str(self.process.pid)
+        if pid is None:
+            pid = self.process.pid
+            self.process.kill()
         print(f'Killing gustav script pid: {pid}')
-        self.process.kill()
         out = subprocess.run(f'kill {pid}', shell=True, capture_output=True, text=True)
         self.update_running(remove={'pid': pid})
         if out.returncode != 0:
             print(f'Process {pid} does not exist : ', out.stderr)
+            return False
         else:
             print(f'Process {pid} killed')
+            return True
 
     def send_request(self, data):
         """
@@ -251,6 +261,7 @@ class GustavIO(object):
 
     def get_setup(self):
         # exps = self.load('setup.json')
+        self.update_running()
         sbj = []
         for r in self.running['subjects']:
             sbj.append({'id': r['sid'], 'port': r['port'], 'time': r['time']})
@@ -279,16 +290,20 @@ class GustavIO(object):
             data = json.load(f)
         return data
 
-    def get_processes(self, name='python'):
+    def get_processes(self, name='python', status=['running', 'sleeping'], verbose=True):
         procs = []
         for proc in psutil.process_iter():
             try:
                 # Get process name & pid from process object.
                 processName = proc.name()
                 processID = proc.pid
+                # Parse tims
                 processTime = proc.create_time()
-                if name in processName:
-                    print(f'{processName} {processID} {processTime}')
+                # Filter according to status
+                processStatus = proc.status()
+                if name in processName and processStatus in status:
+                    if verbose:
+                        print(f'{processName} {processID} {processStatus} {processTime}')
                     procs.append(processID)
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass

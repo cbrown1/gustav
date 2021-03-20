@@ -82,7 +82,37 @@ var getObservings = function (){
     });
 }
 
+var checkButtons = function (){
+    // Kill all gustav processes button
+    $("#killAllBtn").on("click", function(){
+        let serverResponse = $.post('killpid', {'pid': 'all'});
+        serverResponse.done(function( data ) {
+            alert(data);
+            getObservings();
+        });
+
+    });
+    // Kill all button
+    $("#killGustavBtn").on("click", function(){
+        let serverResponse = $.post('killpid', {'pid': 'port'});
+        serverResponse.done(function( data ) {
+            alert(data);
+            getObservings();
+        });
+    });
+
+    // Cleanup button
+    $("#cleanupBtn").on("click", function(){
+        let serverResponse = $.post('killpid', {'pid': 'cleanup'});
+        serverResponse.done(function( data ) {
+            alert(data);
+            getObservings();
+        });
+    });
+}
+
 $(document).ready(function (){
     getTests();
     userCheck();
+    checkButtons();
 });

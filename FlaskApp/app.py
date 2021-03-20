@@ -52,6 +52,40 @@ def setupapi():
     response = GIO.get_setup()
     return jsonify(response)
 
+@app.route('/killpid', methods=['POST'])
+def killpid():
+    client_request = dict(request.form)
+    procs = GIO.get_processes()
+    GIO.update_running()
+    if client_request['pid'] == 'all':
+        # Kill all gustav
+        gustav_pids = [s['pid'] for s in GIO.running['subjects']]
+        gustav_ports = {s['pid']: s['port'] for s in GIO.running['subjects']}
+        pids = [p for p in procs if p in gustav_pids]
+        response = f'Attempted killing {len(pids)} PIDs'
+        for pid in pids:
+            success = GIO.kill(pid)
+            response += f'\nPort: {gustav_ports[pid]} PID: {pid} : {success}'
+    elif client_request['pid'] == 'port':
+        # Only kill current port's process
+        if GIO.process is None:
+            response = 'Gustav experiment has not been started'
+        else:
+            response = f'Killing gustav at port {GIO.port} pid: {GIO.process.pid}'
+            success = GIO.kill()
+            response += f'<br>Success: {success}'
+    elif client_request['pid'] == 'cleanup':
+        procs = GIO.get_processes(status=['running'])
+        gustav_pids = [s['pid'] for s in GIO.running['subjects']]
+        server_pids = list(GIO.running['ports'].values())
+        pids = [p for p in procs if p not in gustav_pids and p not in server_pids]
+        response = f'Found {len(pids)} processes to cleanup'
+        for pid in pids:
+            success = GIO.kill(pid)
+            response += f'\nPID: {pid} : {success}'
+    return jsonify(response)
+
+
 @app.route('/api', methods=['POST'])
 def api():
     print(f'Received: {json.dumps(dict(request.form), indent=2)}')
@@ -86,6 +120,9 @@ def api():
     GIO.send_request(client_request)
     # Get gustav response
     response = GIO.get_response()
+    if 'type' in response and response['type'] in ['stop', 'abort']:
+        print('Killing gustav')
+        GIO.kill()
     # response = GIO.style
     print(f'Sending: {json.dumps(response, indent=2)}')
     return jsonify(response)
