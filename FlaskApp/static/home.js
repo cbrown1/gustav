@@ -109,6 +109,11 @@ var checkButtons = function (){
             getObservings();
         });
     });
+
+    // Cleanup button
+    $("#refreshBtn").on("click", function(){
+      getObservings();
+    });
 }
 
 $(document).ready(function (){
