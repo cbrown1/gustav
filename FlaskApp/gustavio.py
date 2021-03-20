@@ -214,11 +214,11 @@ class GustavIO(object):
             pwds = self.load('pwd_test.json')
         else:
             pwds = self.load('pwd.json')
+        response = 'false'
         for pwd in pwds:
             if data['username'] == pwd['username'] and data['password'] == pwd['password']:
-                return 'true'
-            else:
-                return 'false'
+                response = 'true'
+        return response
 
     def get_experiments(self):
         # Get running processes
