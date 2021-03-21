@@ -258,12 +258,10 @@ class GustavIO(object):
         # exp.experiment.setup( exp )
         e = {'title': exp.title, 'description': exp.note, 'url': url, 'ready': ready}
         exps.append(e)
-        # exps = self.load('experiments.json')
         print('get_experiments' + '-' * 30 + f'\n{exps}')
         return {'experiments': exps}
 
     def get_setup(self):
-        # exps = self.load('setup.json')
         self.update_running()
         sbj = []
         for r in self.running['subjects']:
