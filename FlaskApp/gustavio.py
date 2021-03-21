@@ -250,25 +250,29 @@ class GustavIO(object):
         # url = 'http://74.109.252.140:5051/nafc'
         # url = '/nafc'
         # Get available experiments
-        exps = []
+        self.experiments = []
         gustav_exp__adaptive_quietthresholds.setup(exp)
         # html_exps = list(pkgutil.iter_modules(html.__path__)))
         # Load all available experiments
         # exp.experiment = __import__(exp.experimentBase)
         # exp.experiment.setup( exp )
         e = {'title': exp.title, 'description': exp.note, 'url': url, 'ready': ready}
-        exps.append(e)
-        print('get_experiments' + '-' * 30 + f'\n{exps}')
-        return {'experiments': exps}
+        self.experiments.append(e)
+        print('get_experiments' + '-' * 30 + f'\n{self.experiments}')
+        return {'experiments': self.experiments}
 
     def get_setup(self):
         self.update_running()
-        sbj = []
-        for r in self.running['subjects']:
-            sbj.append({'id': r['sid'], 'port': r['port'], 'time': r['time']})
+        exps = []
+        for exp in self.experiments:
+            sbj = []
+            for r in self.running['subjects']:
+                sbj.append({'id': r['sid'], 'port': r['port'], 'time': r['time']})
+            e = {'title': exp.title, 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
+            exps.append(e)
         # sbj = {'id': self.id, 'port': self.port, 'time': self.str_time}
-        exp = {'title': 'n-AFC', 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
-        data = {'experiments': [exp],
+        # exp = {'title': 'n-AFC', 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
+        data = {'experiments': exps,
                 'max_ports': self.max_ports,
                 'base_port': self.base_port,
                 }
