@@ -233,7 +233,7 @@ class GustavIO(object):
         experiments = []
         for html_exp in pkgutil.iter_modules(html_scripts.__path__):
             submodule = f'gustav.user_scripts.html.{html_exp.name}'
-            exp = {'title': html_exp.name, 'description': '', 'url': '', 'ready': False}
+            exp = {'title': html_exp.name.replace('gustav_exp__', ''), 'description': '', 'url': '', 'ready': False}
             try:
                 exp_script = __import__(submodule, fromlist=[None])
                 if hasattr(exp_script, 'setup'):
