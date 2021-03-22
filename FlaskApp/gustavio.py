@@ -10,8 +10,8 @@ import pkgutil
 
 from tools import read_json
 
-from gustav.utils import exp
-from gustav.user_scripts.html import gustav_exp__adaptive_quietthresholds
+from gustav.utils import exp as gustav_exp
+from gustav.user_scripts import html as html_scripts
 
 
 class GustavIO(object):
@@ -31,24 +31,30 @@ class GustavIO(object):
         self.id = subject_id
         # Read experiments as submodule
         # Check the experiment script if the experiment is available (exp.ready = True)
-        self.experiment = 'gustav_exp__adaptive_quietthresholds'
-        self.script = f'{self.experiment}.py'
+        # self.experiment = 'gustav_exp__adaptive_quietthresholds'
+        # self.script = f'{self.experiment}.py'
         file_dir = os.path.dirname(os.path.abspath(__file__))
-        script_dir = os.path.join(file_dir, '..', 'gustav', 'user_scripts', 'html')
-        self.script_dir = os.path.abspath(script_dir)
+        # script_dir = os.path.join(file_dir, '..', 'gustav', 'user_scripts', 'html')
+        # self.script_dir = os.path.abspath(script_dir)
         self.process = None
         self.dir = None
         self.str_time = None
         self.running_file = os.path.join(file_dir, 'running.json')
         if self.port == self.base_port and os.path.exists(self.running_file):
-            print('Removing running.json')
-            os.remove('running.json')
+            print(f'Removing {self.running_file}')
+            os.remove(self.running_file)
         self.update_running()
         if local:
             self.url = 'http://0.0.0.0'
         else:
             self.url = 'http://74.109.252.140'
+        self.experiments = []
 
+    def setup_script(self, script):
+        self.script = script
+        file_dir = os.path.dirname(os.path.abspath(__file__))
+        script_dir = os.path.join(file_dir, '..', 'gustav', 'user_scripts', 'html')
+        self.script_dir = os.path.abspath(script_dir)
 
     def __repr__(self):
         if self.process is None:
@@ -220,6 +226,35 @@ class GustavIO(object):
                 response = 'true'
         return response
 
+    def read_experiments(self, available_ports=[]):
+        """
+        Read all available experiment from gustav.user_scripts.html
+        """
+        experiments = []
+        for html_exp in pkgutil.iter_modules(html_scripts.__path__):
+            submodule = f'gustav.user_scripts.html.{html_exp.name}'
+            exp = {'title': html_exp.name, 'description': '', 'url': '', 'ready': False}
+            try:
+                exp_script = __import__(submodule, fromlist=[None])
+                if hasattr(exp_script, 'setup'):
+                    exp_script.setup(gustav_exp)
+                    exp['title'] = gustav_exp.title
+                    exp['description'] = gustav_exp.note
+                    if len(available_ports) > 0:
+                        port = min(available_ports)
+                        available_ports.remove(port)
+                        exp_url = exp_script.theForm.Interface.__module__.split('.')[-1]
+                        exp['url'] = f'{self.url}:{port}/{exp_url}'
+                        exp['ready'] = True
+                        print(f'{len(avail_ports)} ports available, selected {port}')
+                else:
+                    print('No ports available!')
+                    exp['description'] = 'Experiment has no setup function'
+            except Exception as e:
+                exp['description'] = f'Failed to load experiment: {e}'
+            experiments.append(exp)
+        return experiments
+
     def get_experiments(self):
         # Get running processes
         procs = self.get_processes()
@@ -239,25 +274,8 @@ class GustavIO(object):
         print(f'Used ports: {used_ports}')
         avail_ports = [p for p in exp_ports if p not in used_ports and p in running_ports]
         print(f'Avail ports: {avail_ports}')
-        if len(avail_ports) == 0:
-            url, ready = '', False
-            print('No ports available!')
-        else:
-            port = min(avail_ports)
-            print(f'{len(avail_ports)} ports available, selected {port}')
-            url = f'{self.url}:{port}/nafc'
-            ready = True
-        # url = 'http://74.109.252.140:5051/nafc'
-        # url = '/nafc'
-        # Get available experiments
-        self.experiments = []
-        gustav_exp__adaptive_quietthresholds.setup(exp)
-        # html_exps = list(pkgutil.iter_modules(html.__path__)))
-        # Load all available experiments
-        # exp.experiment = __import__(exp.experimentBase)
-        # exp.experiment.setup( exp )
-        e = {'title': exp.title, 'description': exp.note, 'url': url, 'ready': ready}
-        self.experiments.append(e)
+
+        self.experiments = self.read_experiments(avail_ports)
         print('get_experiments' + '-' * 30 + f'\n{self.experiments}')
         return {'experiments': self.experiments}
 

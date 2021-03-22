@@ -23,6 +23,7 @@ def setup():
 
 @app.route('/nafc')
 def nafc():
+    GIO.setup_script('gustav_exp__adaptive_quietthresholds.py')
     return render_template('nafc.html')
 
 @app.route('/login', methods=['POST'])
