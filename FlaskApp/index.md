@@ -3,11 +3,49 @@ A simple Python web server with a lightweight frontend to run psychoacoustics ex
 Requires Python >= 3.7
 
 ## Usage
+
+### RPI Server
+
+Connect to the server and start `tmux`
 ```
-cd FlaskApp
+# ssh in to the server
+ssh kutay@74.109.252.140
+
+# load the tmux session
+tmux a
+# if no sessions are available create a new one
+tmux
+```
+
+Create as many `tmux` tabs tab as you need and run `app.py` from each
+- create new tab `ctrl + b + c`
+- navigate to a specific tab (with numeric index): `ctrl + b + <num>`
+
+To run the main server:
+```
+cd gustav/FlaskApp
 python app.py
 ```
-Go to your browser and open `0.0.0.0:5000`.
+
+To run an experiment server:
+```
+cd gustav/FlaskApp
+python app.py --port 5051
+```
+
+### Local
+To run the main server
+```
+cd gustav/FlaskApp
+python app.py --local
+```
+Go to your browser and open `0.0.0.0:5050`.
+
+To run an experiment server open a new terminal window and run:
+```
+cd gustav/FlaskApp
+python app.py --local --port 5051
+```
 
 ## Server Installations
 

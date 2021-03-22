@@ -234,22 +234,24 @@ class GustavIO(object):
         for html_exp in pkgutil.iter_modules(html_scripts.__path__):
             submodule = f'gustav.user_scripts.html.{html_exp.name}'
             exp_title = html_exp.name.replace('gustav_exp__', '').replace('_', '\n')
-            exp = {'title': exp_title, 'description': '', 'url': '', 'ready': False}
+            exp = {'title': exp_title, 'description': '', 'url': '', 'ready': False, 'name': html_exp.name}
             try:
                 exp_script = __import__(submodule, fromlist=[None])
                 if hasattr(exp_script, 'setup'):
                     exp_script.setup(gustav_exp)
                     exp['title'] = gustav_exp.title
                     exp['description'] = gustav_exp.note
+                    template = exp_script.theForm.Interface.__module__.split('.')[-1]
+                    exp['template'] = template
                     if len(available_ports) > 0:
                         port = min(available_ports)
-                        available_ports.remove(port)
-                        exp_url = exp_script.theForm.Interface.__module__.split('.')[-1]
-                        exp['url'] = f'{self.url}:{port}/{exp_url}'
-                        exp['ready'] = True
                         print(f'{len(available_ports)} ports available, selected {port}')
+                        available_ports.remove(port)
+                        exp['url'] = f'{self.url}:{port}/{template}'
+                        exp['ready'] = True
+                    else:
+                        print('No ports available!')
                 else:
-                    print('No ports available!')
                     exp['description'] = 'Experiment has no setup function'
             except Exception as e:
                 exp['description'] = f'Failed to load experiment: {e}'
@@ -284,12 +286,13 @@ class GustavIO(object):
 
     def get_setup(self):
         self.update_running()
+        # IF NO ONE IS RUNNING STILL READ THE EXP BUT RETURN 0 SUBJECTS
         exps = []
         for exp in self.experiments:
             sbj = []
             for r in self.running['subjects']:
                 sbj.append({'id': r['sid'], 'port': r['port'], 'time': r['time']})
-            e = {'title': exp.title, 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
+            e = {'title': exp['title'], 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
             exps.append(e)
         # sbj = {'id': self.id, 'port': self.port, 'time': self.str_time}
         # exp = {'title': 'n-AFC', 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
@@ -298,6 +301,7 @@ class GustavIO(object):
                 'base_port': self.base_port,
                 }
         print('get_setup' + '-' * 30 + f'\n{self}')
+        print(data)
         return data
 
     def dump(self, data=None, filename=None, prefix='', suffix=''):
