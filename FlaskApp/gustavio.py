@@ -233,7 +233,8 @@ class GustavIO(object):
         experiments = []
         for html_exp in pkgutil.iter_modules(html_scripts.__path__):
             submodule = f'gustav.user_scripts.html.{html_exp.name}'
-            exp = {'title': html_exp.name.replace('gustav_exp__', ''), 'description': '', 'url': '', 'ready': False}
+            exp_title = html_exp.name.replace('gustav_exp__', '').replace('_', '\n')
+            exp = {'title': exp_title, 'description': '', 'url': '', 'ready': False}
             try:
                 exp_script = __import__(submodule, fromlist=[None])
                 if hasattr(exp_script, 'setup'):
@@ -246,12 +247,14 @@ class GustavIO(object):
                         exp_url = exp_script.theForm.Interface.__module__.split('.')[-1]
                         exp['url'] = f'{self.url}:{port}/{exp_url}'
                         exp['ready'] = True
-                        print(f'{len(avail_ports)} ports available, selected {port}')
+                        print(f'{len(available_ports)} ports available, selected {port}')
                 else:
                     print('No ports available!')
                     exp['description'] = 'Experiment has no setup function'
             except Exception as e:
                 exp['description'] = f'Failed to load experiment: {e}'
+                exp['url'] = ''
+                exp['ready'] = False
             experiments.append(exp)
         return experiments
 
@@ -272,10 +275,10 @@ class GustavIO(object):
         # Check ifthe gustav process are running
         used_ports = [s['port'] for s in self.running['subjects'] if int(s['pid']) in procs]
         print(f'Used ports: {used_ports}')
-        avail_ports = [p for p in exp_ports if p not in used_ports and p in running_ports]
-        print(f'Avail ports: {avail_ports}')
+        available_ports = [p for p in exp_ports if p not in used_ports and p in running_ports]
+        print(f'Avail ports: {available_ports}')
 
-        self.experiments = self.read_experiments(avail_ports)
+        self.experiments = self.read_experiments(available_ports)
         print('get_experiments' + '-' * 30 + f'\n{self.experiments}')
         return {'experiments': self.experiments}
 
