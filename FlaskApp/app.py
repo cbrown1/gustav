@@ -77,7 +77,7 @@ def killpid():
         else:
             response = f'Killing gustav at port {GIO.port} pid: {GIO.process.pid}'
             success = GIO.kill()
-            response += f'<br>Success: {success}'
+            response += f'\nSuccess: {success}'
     elif client_request['pid'] == 'cleanup':
         procs = GIO.get_processes(status=['running'])
         gustav_pids = [s['pid'] for s in GIO.running['subjects']]

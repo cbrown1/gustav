@@ -286,16 +286,34 @@ class GustavIO(object):
 
     def get_setup(self):
         self.update_running()
-        # IF NO ONE IS RUNNING STILL READ THE EXP BUT RETURN 0 SUBJECTS
-        exps = []
-        for exp in self.experiments:
+        exp_ports = [p for p in self.running['ports'] if int(p) != self.base_port]
+        port_pids = self.running['ports'].values()
+        running_ports = [pt for pt, pd in self.running['ports'].items() if pd in port_pids]
+        used_ports = [s['port'] for s in self.running['subjects'] if int(s['pid']) in procs]
+        available_ports = [p for p in exp_ports if p not in used_ports and p in running_ports]
+
+        all_ports = sorted([int(p) for p in self.running['ports']])
+        port_info = []
+        for port in all_ports:
+            pid = self.running['ports'][port]
+            if port in used_ports:
+                status = 'Busy'
+            elif port in available_ports:
+                status = 'Ready'
+            elif port == self.base_port:
+                status = 'Base Port'
+            else:
+                status = 'Unknown'
+            port_info.append({'id': f'PID: {pid}', 'port': f'PORT: {port}', 'time': f'STATUS: {status}'})
+        exps = [{'title': 'Running ports', 'description': f'{len(port_info)} port(s)', 'subjects': port_info}]
+
+        for exp in self.get_experiments()['experiments']:
             sbj = []
             for r in self.running['subjects']:
                 sbj.append({'id': r['sid'], 'port': r['port'], 'time': r['time']})
             e = {'title': exp['title'], 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
             exps.append(e)
-        # sbj = {'id': self.id, 'port': self.port, 'time': self.str_time}
-        # exp = {'title': 'n-AFC', 'description': f'{len(sbj)} subject(s)', 'subjects': sbj}
+
         data = {'experiments': exps,
                 'max_ports': self.max_ports,
                 'base_port': self.base_port,
@@ -327,7 +345,7 @@ class GustavIO(object):
                 # Get process name & pid from process object.
                 processName = proc.name()
                 processID = proc.pid
-                # Parse tims
+                # TODO: Parse time
                 processTime = proc.create_time()
                 # Filter according to status
                 processStatus = proc.status()
