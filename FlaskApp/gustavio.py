@@ -40,9 +40,9 @@ class GustavIO(object):
         self.dir = None
         self.str_time = None
         self.running_file = os.path.join(file_dir, 'running.json')
-        if self.port == self.base_port and os.path.exists(self.running_file):
-            print(f'Removing {self.running_file}')
-            os.remove(self.running_file)
+        # if self.port == self.base_port and os.path.exists(self.running_file):
+        #     print(f'Removing {self.running_file}')
+        #     os.remove(self.running_file)
         self.update_running()
         if local:
             self.url = 'http://0.0.0.0'
