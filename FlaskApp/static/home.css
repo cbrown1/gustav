@@ -394,7 +394,8 @@ ul{
 }
 
 .usersPages  .observingPage{
-
+    height: 100%;
+    overflow: auto;
     flex-flow: row;
     width: 60%;
     align-items: start;
@@ -452,6 +453,12 @@ input[name="base-ports"],input[name="max-ports"]{
     width: 50px;
     text-align: center;
     padding-left: 15px;
+}
+
+#refreshBtn,#killGustavBtn,#killAllBtn,#cleanupBtn{
+    height: 30px;
+    width: unset;
+    padding: 0 20px;
 }
 
 /* Responsive Areas */

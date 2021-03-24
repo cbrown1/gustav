@@ -63,12 +63,20 @@ var getObservings = function (){
     serverResponse.done(function( data ) {
         var items = [];
         $.each( data.experiments, function( key, val ) {
-
             subjects = "";
             $.each(val.subjects, function (i,item){
-                subjects = subjects + '<div><span class="d-block"> ' + item.id + ' </span><span class="d-block"> ' + item.port + ' </span><span class="d-block">' + item.time + '</span></div>';
-
-            })
+                subjects = subjects + "<div>";
+                if("port" in item){
+                	subjects = subjects + "<span class='d-block'>" + item.port + "</span>";
+                }
+                if("id" in item){
+                	subjects = subjects + "<span class='d-block'>" + item.id + "</span>";
+                }
+                if("time" in item){
+                	subjects = subjects + "<span class='d-block'>" + item.time + "</span>";
+                }
+                subjects = subjects + '</div>';
+            });
 
             items.push('<div class="observingArea"><div><h2>' + val.title + '</h2><span>' + val.description + '</span><div class="subjects">' + subjects + '</div></div></div>');
 
