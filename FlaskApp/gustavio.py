@@ -286,6 +286,7 @@ class GustavIO(object):
 
     def get_setup(self):
         self.update_running()
+        procs = self.get_processes()
         exp_ports = [p for p in self.running['ports'] if int(p) != self.base_port]
         port_pids = self.running['ports'].values()
         running_ports = [pt for pt, pd in self.running['ports'].items() if pd in port_pids]
@@ -304,7 +305,7 @@ class GustavIO(object):
                 status = 'Base Port'
             else:
                 status = 'Unknown'
-            port_info.append({'id': f'PID: {pid}', 'port': f'PORT: {port}', 'time': f'STATUS: {status}'})
+            port_info.append({'port': f'{port} : {status}', 'id': f'PID: {pid}'})
         exps = [{'title': 'Running ports', 'description': f'{len(port_info)} port(s)', 'subjects': port_info}]
 
         for exp in self.get_experiments()['experiments']:
