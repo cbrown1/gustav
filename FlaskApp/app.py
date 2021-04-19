@@ -29,6 +29,10 @@ def nafc():
             GIO.setup_script('{}.py'.format(e['name']))
     return render_template('nafc.html')
 
+@app.route('/speech')
+def speech():
+    return render_template('speech.html')
+
 @app.route('/login', methods=['POST'])
 def login():
     client_request = dict(request.form)
@@ -43,6 +47,22 @@ def change_ports():
     GIO.base_port = client_request['base_port']
     print(f'Changed ports | base: {GIO.base_port} max: {GIO.max_ports}')
     return jsonify({})
+
+@app.route('/speechapi', methods=['POST'])
+def speechapi():
+    client_request = dict(request.form)
+    if client_request['type'] == 'setup':
+        response = GIO.load('setup.json')
+    elif client_request['type'] == 'trial':
+        response = GIO.load('calib.json')
+    elif client_request['type'] == 'answer':
+        print(f'Answer: {client_request}')
+        response = GIO.load('trial.json')
+    else:
+        print(f'Unknown req: {client_request}')
+        response = {}
+    # response = GIO.get_experiments()
+    return jsonify(response)
 
 @app.route('/homeapi', methods=['POST'])
 def homeapi():

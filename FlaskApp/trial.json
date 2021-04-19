@@ -1,0 +1,7 @@
+{
+  "audio": "static/audio/bell.wav",
+  "sentence": "marry has a little lamb",
+  "sentence_prompt": "Please type what you heard",
+  "answer_prompt": "How many words did you get correct?",
+  "type": "trial"
+}
