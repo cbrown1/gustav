@@ -33,6 +33,10 @@ def nafc():
 def speech():
     return render_template('speech.html')
 
+@app.route('/lateralization')
+def lateralization():
+    return render_template('lateralization.html')
+
 @app.route('/login', methods=['POST'])
 def login():
     client_request = dict(request.form)
@@ -58,6 +62,22 @@ def speechapi():
     elif client_request['type'] == 'answer':
         print(f'Answer: {client_request}')
         response = GIO.load('trial.json')
+    else:
+        print(f'Unknown req: {client_request}')
+        response = {}
+    # response = GIO.get_experiments()
+    return jsonify(response)
+
+@app.route('/lateralizationapi', methods=['POST'])
+def lateralizationapi():
+    client_request = dict(request.form)
+    if client_request['type'] == 'setup':
+        response = GIO.load('setup.json')
+    elif client_request['type'] == 'trial':
+        response = GIO.load('lateralization_trial.json')
+    elif client_request['type'] == 'answer':
+        print(f'Answer: {client_request}')
+        response = GIO.load('lateralization_trial.json')
     else:
         print(f'Unknown req: {client_request}')
         response = {}
