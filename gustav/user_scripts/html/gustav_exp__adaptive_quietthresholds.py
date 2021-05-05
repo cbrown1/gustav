@@ -2,22 +2,28 @@
 
 # A Gustav settings file!
 
-import os, sys
-import numpy as np
+import os
+import sys
 import time
+
+import psylab           # https://github.com/cbrown1/psylab
+import numpy as np
+import soundfile as sf
+
 import gustav
-from gustav.forms.curses import nafc as theForm
-import psylab                              # https://github.com/cbrown1/psylab
-import medussa as m                        # https://github.com/cbrown1/medussa
+from gustav.forms.html import nafc as theForm
+
 
 def setup(exp):
+    print(f'n-AFC setup')
     # setup gets called before the experiment begins
 
     # General Experimental Variables
+    exp.url = 'nafc'
     exp.name = '_quiet_thresholds_'     # Experiment name. Accessible as $name when logging or recording data
     exp.method = 'adaptive'             # 'constant' for constant stimuli, or 'adaptive' for a staircase procedure (SRT, etc)
     exp.prompt = 'Which interval?'      # A prompt for subject
-    exp.frontend = 'tk'                 # The frontend to use when interacting with subject or experimenter. Can be 'term', 'tk', or 'qt' (pyqt4)
+    exp.frontend = 'term'               # The frontend to use when interacting with subject or experimenter. Can be 'term', 'tk', or 'qt' (pyqt4)
     exp.logFile = './$name_$date.log'   # The path to the logfile
     exp.logConsole = True               # Whether to direct log info to the console
     exp.logConsoleDelay = True          # When using a curses form, the console is not available. Set to True to delay print until end of exp when curses form is destroyed.
@@ -31,16 +37,21 @@ def setup(exp):
     exp.cacheTrials = False             # Currently unused
     exp.validKeys = '1,2';              # comma-delimited list of valid responses
     exp.quitKey = '/'
+    exp.title = 'n-AFC'
     exp.note = "Quiet thresholds for pure tones"
     exp.comments = '''\
     '''
+    exp.info = '''Quiet thresholds for pure tones
 
-    if not exp.subjID:
-        ret = input("Enter Subject ID (Or `\` to quit): ")
-        if ret == '\\':
-            exp.run.gustav_is_go = False
-        else:
-            exp.subjID = ret
+    In this experiment you will see 2 boxes on the screen displaying an audio player
+    The sounds will be played sequentially and you will be asked to choose the louder one
+    Please press 1 or 2 to make your selection
+    '''
+    exp.welcome = f'''Welcome to the experiment.
+    Before we start please provide informed consent on the next page.
+    '''
+    exp.welcome += "\nID: " + exp.subjID
+
 
     """EXPERIMENT VARIABLES
         There are 2 kinds of variables: factorial and ordered
@@ -80,16 +91,15 @@ def setup(exp):
             stim['masker'] += masker
         stim['masker'] = stim['masker'][0:stim['masker_samples_needed']]
     """
-    # TODO: for python 2.7, change these to ordered dicts, where name is the key
-    # and the dict {type, levels} is the val
 
     exp.var.factorial['frequency']= [
-                                    '125',
-                                    '250',
-                                    '500',
+                                    # '125',
+                                    # '250',
+                                    # '500',
                                     '1000',
                                   ]
     def step(exp):
+        print(f'STEP')
         # A custom step function for adaptive tracking. This is actually the same as the default one, here for demo purposes
         exp.var.dynamic['value'] += exp.var.dynamic['cur_step'] * exp.var.dynamic['steps'][exp.var.dynamic['n_reversals']]
         exp.var.dynamic['value'] = max(exp.var.dynamic['value'], exp.var.dynamic['val_floor'])
@@ -109,9 +119,9 @@ def setup(exp):
                     'val_ceil': 70,      # Ceiling
                     'val_floor_n': 3,    # Number of consecutive floor values to quit at
                     'val_ceil_n': 3,     # Number of consecutive ceiling values to quit at
-                    'run_n_trials': 0,   # Set to non-zero to run exactly that number of trials
+                    'run_n_trials': 3,   # Set to non-zero to run exactly that number of trials
                     'max_trials': 60,    # Maximum number of trials to run
-                    'vals_to_avg': 6,    # The number of values to average
+                    'vals_to_avg': 3,    # The number of values to average
                     'step': step,        # optional. A custom step function. Signature: def step(exp)
                     'max_level': 80,
                    }
@@ -137,8 +147,8 @@ def setup(exp):
         Add any additional variables you need here
     '''
     exp.user.fs = 44100
-    exp.user.isi = 250 # ms
-    exp.user.interval = 500
+    exp.user.isi = 250       # wait duration between audio files (ms)
+    exp.user.interval = 500  # duration of 1 audio file (ms)
 
 """CUSTOM PROMPT
     If you want a custom response prompt, define a function for it
@@ -146,13 +156,62 @@ def setup(exp):
     if you want to cancel the experiment, set both run.block_on and
     run.pylab_is_go to False
 """
+def pre_exp(exp):
+    print('PRE EXP')
+    # Get ID and port
+    if ':' in exp.subjID:
+        exp.subjID, port = exp.subjID.split(':')
+    else:
+        port = 5050
+    print(f'Subject ID: {exp.subjID} port: {port}')
+    # Only runs once before the whole thing
+    exp.interface = theForm.Interface(alternatives=exp.validKeys.split(","), port=port)
+    # Setup styling here (see style.json for more)
+    exp.interface.style['logo'] = 'static/index.svg'
+    exp.interface.style["--background_color"] = "#232323"
+    exp.interface.style["--second_color"] = "#c0c0c0"
+    exp.interface.style["--button_size"] = "100px"
+    exp.interface.style["--button-border"] = "2px"
+    exp.interface.style["--button-border-playing"] = "6px"
+    exp.interface.style["--corner-text-fs"] = "20px"
+    exp.interface.style["message"] = exp.welcome.replace('\n', '<br>')
+    exp.interface.style["performance_feedback"] = True
+    exp.interface.style["trial_pause"] = False
+    exp.interface.feedback_duration = 500
+    # Save styling information for the server
+    exp.interface.dump_style()
+    # Wait for initial client input
+    # This will trigger if the main page is loaded in a browser
+    # That's why the max timeout is larger than the default
+
+    exp.interface.id = exp.subjID
+    exp.interface.subjdir = os.path.join(exp.interface.expdir, exp.interface.id)
+    exp.interface.client_subjdir = f'{exp.interface.client_portdir}/{exp.subjID}'
+    exp.interface.info = exp.info
+    exp.interface.upper_left_text = f"Subject {exp.subjID}"
+    exp.interface.prompt1 = "Press space to begin"
+    exp.interface.prompt2 = "Which Interval?"
+    # Wait for info call
+    ret = exp.interface.get_resp()
+    fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
+    exp.interface.dump_info(fname)
+
 def prompt_response(exp):
+    """
+    Only called after present_trial and before post_trial
+
+    Wait for input from the client.
+    Check user specific directory for a new input.
+    """
+    print('PROMPT RESPONSE')
     while True:
         ret = exp.interface.get_resp()
-        if ret in exp.validKeys:
-            exp.run.response = ret
+        if 'answer' in ret:
+            exp.run.response = ret['answer']
             break
-        elif ret in exp.quitKeys:
+        elif 'type' in ret and ret['type'] == 'abort':
+            exp.interface.abort(exp, archive=True)
+            exp.run.block_on = False
             exp.run.gustav_is_go = False
             exp.var.dynamic['msg'] = "Cancelled by user"
             break
@@ -164,71 +223,57 @@ def pre_trial(exp):
         available. For the current level of a variable, use
         var.current['varname'].
     """
-    exp.interface.update_Status_Right("Trial {:}".format(exp.run.trials_block), redraw=True)
-    isi = np.zeros(int(psylab.signal.ms2samp(int(exp.user.isi),int(exp.user.fs))))
+    print(f'PRE TRIAL {exp.run.trials_block}')
+    exp.interface.lower_left_text = f'Trial: {exp.run.trials_block}'
     interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
     interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
     interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
     interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
 
+    # Select correct answer randomly
     exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
     if exp.var.dynamic['correct'] == 1:
-        exp.stim.out = np.hstack((interval_sig, isi, interval_noi))
+        # If the correct answer is 1 send the signal first
+        audio = [interval_sig, interval_noi]
     else:
-        exp.stim.out = np.hstack((interval_noi, isi, interval_sig))
+        # Else send the 'silence' first
+        audio = [interval_noi, interval_sig]
 
+    exp.interface.audio = []
+    for i, a in enumerate(audio, start=1):
+        fname = os.path.join(exp.interface.subjdir, f'{exp.run.block}_{exp.run.trials_block}_{i}.wav')
+        sf.write(fname, a, exp.user.fs)
+        client_fname = os.path.join(exp.interface.client_subjdir, f'{exp.run.block}_{exp.run.trials_block}_{i}.wav')
+        exp.interface.audio.append({'name': i, 'file': client_fname, 'id': i})
 
 def present_trial(exp):
-    #pass
-    #m.play_array(stim.out,user.fs)
-    time.sleep(.1)
-    exp.interface.show_Notify_Left(False)    # Hide the 'press space' text since they just pressed it
-    exp.interface.show_Notify_Right(True)    # Show the listen text
-    exp.interface.show_Prompt(False)         # Don't show prompt during presentation b/c we don't want a response
-    exp.interface.show_Buttons(True, redraw=True) # Show buttons so user gets visual feedback on interfal playback
-    s = exp.audiodev.open_array(exp.stim.out,exp.user.fs)
-    s.play()
-    for i in range(len(exp.interface.alternatives)):
-        exp.interface.set_border(i, 'Heavy', redraw=True)
-        time.sleep(exp.user.interval/1000.)
-        exp.interface.set_border(i, 'Light', redraw=True)
-        time.sleep(exp.user.isi/1000.)
-    exp.interface.show_Notify_Right(False)
-    exp.interface.show_Prompt(True, redraw=True)
-
+    """
+    Update interface with trial information.
+    """
+    print('PRESENT TRIAL')
+    # Probably should save json file here with output
+    exp.interface.present_trial(exp)
 
 def post_trial(exp):
-#    exp.interface.button_light([1,2], None)
+    # Updates the buttons according to correct answer
+    # this is handled on the server side
+    print('POST TRIAL')
+    if not exp.interface.style["trial_pause"]:
+        exp.interface.prompt1 = ""
     if exp.run.gustav_is_go:
-        if str(exp.var.dynamic['correct']).lower() == exp.run.response.lower():
-            color = 'Green'
-        else:
-            color = 'Red'
-        for i in range(3):
-            exp.interface.set_color(exp.var.dynamic['correct']-1, color, redraw=True)
-            time.sleep(.1)
-            exp.interface.set_color(exp.var.dynamic['correct']-1, 'None', redraw=True)
-            time.sleep(.05)
-
-def pre_exp(exp):
-    exp.audiodev = m.open_device()
-    exp.interface = theForm.Interface(alternatives = exp.validKeys.split(","))
-    exp.interface.update_Title_Center(exp.note)
-    exp.interface.update_Title_Right("Subject {:}".format(exp.subjID) )
-    exp.interface.show_Buttons(False)
-    exp.interface.show_Notify_Left(False)
-    exp.interface.update_Notify_Right("Listen", show=False)
-    exp.interface.update_Prompt("Press any key to begin", show=True, redraw=True)
-    # Wait for a keypress
-    ret = exp.interface.get_resp()
-    exp.interface.update_Prompt("Which Interval?", show=False, redraw=True)
-
+        correct = False
+        if str(exp.var.dynamic['correct']).lower() == int(exp.run.response):
+            correct = True
+        print(f'Got answer {exp.run.response}, correct: {correct}')
 
 def post_exp(exp):
-    exp.interface.destroy()
+    print('POST EXP')
+    exp.interface.stop(exp, prompt="Experiment completed, thank you for participating.", archive=True, destroy=True, sleep=10)
 
 def pre_block(exp):
-    exp.interface.update_Status_Center("Block {:} of {:}".format(exp.run.block+1, exp.var.nblocks+1))
+    print(f'PRE BLOCK {exp.run.block}')
+    # Runs once before every block of trials (4 blocks in this case because of 4 frequencies)
+    exp.interface.lower_right_text = f"Block {exp.run.block + 1} of {exp.var.nblocks}"
 
 if __name__ == '__main__':
     argv = sys.argv[1:]

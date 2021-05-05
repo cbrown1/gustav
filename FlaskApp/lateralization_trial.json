@@ -1,0 +1,15 @@
+{
+  "type": "lateralization_trial",
+  "audio": "static/audio/bell.wav",
+  "lower_left_text": "Trial 12",
+  "lower_right_text": "Block 1",
+  "upper_left_text": "Lateralization",
+  "start_prompt": "Press space or tap anywhere to begin",
+  "play_prompt": "Playing audio, please listen",
+  "answer_prompt": "Where did you hear it?",
+  "button_text": "Respond",
+  "show_slider_value": true,
+  "trial_pause": false,
+  "trial_pause_dur": 2000,
+  "next_trial_delay": 1000
+}

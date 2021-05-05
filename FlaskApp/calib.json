@@ -1,0 +1,8 @@
+{
+  "type": "level_calibration",
+  "audio": "static/audio/bell.wav",
+  "prompt": "Please adjust your audio level<p>testing</p>",
+  "loop_button": true,
+  "retry_button" : true,
+  "done_button": true
+}

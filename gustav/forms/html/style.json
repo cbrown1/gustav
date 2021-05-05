@@ -1,0 +1,33 @@
+{
+  "type": "style",
+  "--background_color" : "#232323",
+  "--text_color" : "#fff",
+  "--main_color": "#ea4335",
+  "--second_color": "#249a41",
+  "--third_color": "#04255cde",
+  "--passive_color": "#999",
+  "--main_font": "'Open Sans', sans-serif",
+  "--main_transation": "all .5s",
+
+
+  "--button_size" : "85px",
+  "loading_bars": false,
+  "performance_feedback": true,
+  "trial_pause": false,
+  "trial_pause_dur": 1000,
+
+  "--success_border": "#249a41",
+  "--error_border": "#ea4335",
+
+  "--button-border": "1px",
+  "--button-background": "transparent",
+  "--button-hover-border": "1px",
+  "--button-hover-color": "#ccc",
+  "--button-hover-background": "transparent",
+  "--button-border-playing": "5px",
+  "--button-played-color": "#c0c0c0",
+  "--button-played-background": "transparent",
+
+  "--start-page-fs": "26px",
+  "--corner-text-fs:": "16px"
+}

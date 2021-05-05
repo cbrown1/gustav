@@ -7,7 +7,7 @@ import numpy as np
 import time
 import curses
 import gustav
-from gustav.forms import lateralization as theForm
+from gustav.forms.curses import lateralization as theForm
 import psylab                              # https://github.com/cbrown1/psylab
 import medussa as m                        # https://github.com/cbrown1/medussa
 
@@ -83,7 +83,7 @@ def setup(exp):
     """
     # TODO: for python 2.7, change these to ordered dicts, where name is the key
     # and the dict {type, levels} is the val
-    
+
     exp.var.factorial['frequency']= [
                                     '250',
                                     '4000',
@@ -106,7 +106,7 @@ def setup(exp):
         'startblock' : 1,
         'starttrial' : 1,
         }
-        
+
     """CONDITION PRESENTATION ORDER
         Use 'prompt' to prompt for condition on each block, 'random' to randomize
         condition order, 'menu' to be able to choose from a list of conditions at
@@ -177,7 +177,7 @@ def pre_trial(exp):
         This function gets called on every trial to generate the stimulus, and
         do any other processing you need. All settings and variables are
         available. For the current level of a variable, use
-        var.current['varname']. 
+        var.current['varname'].
     """
     exp.interface.update_Status_Right("Trial {:} of {:}".format(exp.run.trials_block+1, exp.var.constant['trialsperblock']), redraw=True)
     cue = exp.var.current['cue']
@@ -189,7 +189,7 @@ def pre_trial(exp):
         exp.stim.out = psylab.signal.apply_ild(sig, exp.user.this_range[exp.run.trials_block])
     else:
         exp.stim.out = psylab.signal.apply_itd(sig, exp.user.fs, exp.user.this_range[exp.run.trials_block])
-    
+
 def present_trial(exp):
     #pass
     #m.play_array(stim.out,user.fs)

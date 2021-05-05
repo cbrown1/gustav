@@ -1,0 +1,11 @@
+{
+  "start_prompt": "Press space or tap anywhere to begin",
+  "play_prompt": "Playing audio, please listen",
+  "sentence_prompt": "Please type what you heard",
+  "sentence_text": "Original sentence",
+  "answer_text": "Your answer",
+  "answer_prompt": "How many words did you get correct?",
+  "audio_delay" : 500,
+  "next_trial_delay" : 500,
+  "type": "setup"
+}
