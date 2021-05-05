@@ -29,6 +29,7 @@ class GustavIO(object):
         self.max_ports = 10
         self.base_port = 5050
         self.id = subject_id
+        self.scripts = []
         # Read experiments as submodule
         # Check the experiment script if the experiment is available (exp.ready = True)
         # self.experiment = 'gustav_exp__adaptive_quietthresholds'
@@ -226,7 +227,7 @@ class GustavIO(object):
                 response = 'true'
         return response
 
-    def read_experiments(self, available_ports=[]):
+    def read_experiments(self, available_ports=[], url=None, name=None):
         """
         Read all available experiment from gustav.user_scripts.html
         """
@@ -234,20 +235,22 @@ class GustavIO(object):
         for html_exp in pkgutil.iter_modules(html_scripts.__path__):
             submodule = f'gustav.user_scripts.html.{html_exp.name}'
             exp_title = html_exp.name.replace('gustav_exp__', '').replace('_', '\n')
-            exp = {'title': exp_title, 'description': '', 'url': '', 'ready': False, 'name': html_exp.name}
+            exp = {'title': exp_title,
+                   'description': '',
+                   'url': '', 'ready': False, 'name': html_exp.name}
             try:
                 exp_script = __import__(submodule, fromlist=[None])
                 if hasattr(exp_script, 'setup'):
                     exp_script.setup(gustav_exp)
                     exp['title'] = gustav_exp.title
                     exp['description'] = gustav_exp.note
-                    template = exp_script.theForm.Interface.__module__.split('.')[-1]
-                    exp['template'] = template
+                    # template = exp_script.theForm.Interface.__module__.split('.')[-1]
                     if len(available_ports) > 0:
                         port = min(available_ports)
                         print(f'{len(available_ports)} ports available, selected {port}')
                         available_ports.remove(port)
-                        exp['url'] = f'{self.url}:{port}/{template}'
+                        exp['url'] = f'{self.url}:{port}/{gustav_exp.url}-{html_exp.name}'
+                        print('---> url: ', exp['url'])
                         exp['ready'] = True
                     else:
                         print('No ports available!')
@@ -257,7 +260,11 @@ class GustavIO(object):
                 exp['description'] = f'Failed to load experiment: {e}'
                 exp['url'] = ''
                 exp['ready'] = False
-            experiments.append(exp)
+            if url is None and name is None:
+                experiments.append(exp)
+            else:
+                if url == gustav_exp.url and name == html_exp.name:
+                    experiments.append(exp)
         return experiments
 
     def get_experiments(self):

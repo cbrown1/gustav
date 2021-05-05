@@ -21,12 +21,17 @@ def home():
 def setup():
     return render_template('setup.html')
 
+@app.route('/<experiment>')
+def experiment(experiment):
+    url, name = experiment.split('-')
+    print(f' <---> url : {url} | name : {name}')
+    exp = GIO.read_experiments(url=url, name=name)[0]
+    GIO.setup_script('{}.py'.format(exp['name']))
+    return render_template(f'{url}.html')
+
 @app.route('/nafc')
 def nafc():
-    for e in GIO.read_experiments():
-        if e['template'] == 'nafc':
-            print(f'exp found: {e}')
-            GIO.setup_script('{}.py'.format(e['name']))
+    GIO.setup_script('gustav_exp__adaptive_quietthresholds.py')
     return render_template('nafc.html')
 
 @app.route('/speech')
