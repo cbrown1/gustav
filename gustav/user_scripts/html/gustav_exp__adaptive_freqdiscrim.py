@@ -20,16 +20,16 @@ def setup(exp):
 
     # General Experimental Variables
     exp.url = 'nafc'
-    exp.name = '_quiet_thresholds_'     # Experiment name. Accessible as $name when logging or recording data
+    exp.name = 'freq_discrim'           # Experiment name. Accessible as $name when logging or recording data
     exp.method = 'adaptive'             # 'constant' for constant stimuli, or 'adaptive' for a staircase procedure (SRT, etc)
     exp.prompt = 'Which interval?'      # A prompt for subject
     exp.frontend = 'term'               # The frontend to use when interacting with subject or experimenter. Can be 'term', 'tk', or 'qt' (pyqt4)
-    exp.logFile = './$name_$date.log'   # The path to the logfile
+    exp.logFile = './log/$name_$date.log'   # The path to the logfile
     exp.logConsole = True               # Whether to direct log info to the console
     exp.logConsoleDelay = True          # When using a curses form, the console is not available. Set to True to delay print until end of exp when curses form is destroyed.
     exp.debug = False                   # Currently unused
     exp.recordData = True               # Whether to record data
-    exp.dataFile = './$name_$subj.py'   # The name of the data file
+    exp.dataFile = './data/$name__$subj.py'   # The name of the data file
     exp.dataString_trial = ''
     exp.dataString_block = ''
     exp.dataString_exp = ''
@@ -37,20 +37,31 @@ def setup(exp):
     exp.cacheTrials = False             # Currently unused
     exp.validKeys = '1,2';              # comma-delimited list of valid responses
     exp.quitKey = '/'
-    exp.title = 'n-AFC'
-    exp.note = "Quiet thresholds for pure tones"
+    exp.title = 'fdiscrim'
+    exp.note = "Frequency discrimination of pure tones"
     exp.comments = '''\
     '''
-    exp.info = '''Quiet thresholds for pure tones
+    exp.info = '''Frequency discriminationon of pure tones
 
-    In this experiment you will see 2 boxes on the screen displaying an audio player
-    The sounds will be played sequentially and you will be asked to choose the louder one
-    Please press 1 or 2 to make your selection
+    You will hear 2 tones on each trial, and your task will be to choose
+    which tone sounded higher in pitch. If the first tone sounded higher, choose 1
+    (click on the 1 box or hit the 1 key), and if the second tone sounded higher, then
+    choose 2. If you get it correct, the task will get harder (the difference between the
+    tones will decrease), and if you get it wrong it will get easier. Just do your best and
+    guess when you are not sure.
+    '''
+    exp.info_qt = '''Quiet thresholds for pure tones
+
+    In this experiment you will hear a tone on each trial, and your task will be to choose
+    which of two intervals it occured in. If it occured during the first interval, choose 1
+    (click on the 1 box or hit the 1 key), and if it occured in the second interval then
+    choose 2. If you get it correct, the task will get harder (the level of the tone will be
+    lower), and if you get it wrong it will get easier. Just do your best and guess when you
+    are not sure.
     '''
     exp.welcome = f'''Welcome to the experiment.
     Before we start please provide informed consent on the next page.
     '''
-    exp.welcome += "\nID: " + exp.subjID
 
 
     """EXPERIMENT VARIABLES
@@ -94,9 +105,12 @@ def setup(exp):
 
     exp.var.factorial['frequency']= [
                                     # '125',
-                                    # '250',
-                                    # '500',
-                                    '1000',
+                                     '250',
+                                     '500',
+                                     '1000',
+                                     '2000',
+                                     '4000',
+
                                   ]
     def step(exp):
         print(f'STEP')
@@ -119,9 +133,9 @@ def setup(exp):
                     'val_ceil': 70,      # Ceiling
                     'val_floor_n': 3,    # Number of consecutive floor values to quit at
                     'val_ceil_n': 3,     # Number of consecutive ceiling values to quit at
-                    'run_n_trials': 3,   # Set to non-zero to run exactly that number of trials
+                    'run_n_trials': 0,   # Set to non-zero to run exactly that number of trials
                     'max_trials': 60,    # Maximum number of trials to run
-                    'vals_to_avg': 3,    # The number of values to average
+                    'vals_to_avg': 2,    # The number of values to average
                     'step': step,        # optional. A custom step function. Signature: def step(exp)
                     'max_level': 80,
                    }
@@ -190,11 +204,14 @@ def pre_exp(exp):
     exp.interface.info = exp.info
     exp.interface.upper_left_text = f"Subject {exp.subjID}"
     exp.interface.prompt1 = "Press space to begin"
-    exp.interface.prompt2 = "Which Interval?"
+    exp.interface.prompt2 = "Which interval is higher in pitch?"
     # Wait for info call
     ret = exp.interface.get_resp()
     fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
     exp.interface.dump_info(fname)
+
+    # Holds thresholds to display to user at end of experiment
+    exp.user.results = ""
 
 def prompt_response(exp):
     """
@@ -225,19 +242,23 @@ def pre_trial(exp):
     """
     print(f'PRE TRIAL {exp.run.trials_block}')
     exp.interface.lower_left_text = f'Trial: {exp.run.trials_block}'
-    interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
-    interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
-    interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
-    interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
+    interval_lo = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
+    interval_hi = psylab.signal.tone(float(exp.var.current['frequency'])+float(exp.var.dynamic['value']),exp.user.fs,exp.user.interval)
+
+    interval_lo = psylab.signal.ramps(interval_lo,exp.user.fs)
+    interval_hi = psylab.signal.ramps(interval_hi,exp.user.fs)
+
+    interval_lo = psylab.signal.atten(interval_lo,15)
+    interval_hi = psylab.signal.atten(interval_hi,15)
 
     # Select correct answer randomly
     exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
     if exp.var.dynamic['correct'] == 1:
         # If the correct answer is 1 send the signal first
-        audio = [interval_sig, interval_noi]
+        audio = [interval_hi, interval_lo]
     else:
         # Else send the 'silence' first
-        audio = [interval_noi, interval_sig]
+        audio = [interval_lo, interval_hi]
 
     exp.interface.audio = []
     for i, a in enumerate(audio, start=1):
@@ -259,21 +280,29 @@ def post_trial(exp):
     # this is handled on the server side
     print('POST TRIAL')
     if not exp.interface.style["trial_pause"]:
-        exp.interface.prompt1 = ""
+        exp.interface.prompt1 = "&nbsp;"
     if exp.run.gustav_is_go:
         correct = False
         if str(exp.var.dynamic['correct']).lower() == int(exp.run.response):
             correct = True
         print(f'Got answer {exp.run.response}, correct: {correct}')
 
+def post_block(exp):
+#    print(f"Block finished. f = {exp.var.current['frequency']} mean = {exp.var.dynamic['mean']}")
+#    exp.interface.prompt2 = f"Block finished. f = {exp.var.current['frequency']} mean = {exp.var.dynamic['mean']}"
+    exp.interface.upper_left_text = f"Previous block f = {exp.var.current['frequency']} mean = {exp.var.dynamic['mean']}"
+    exp.user.results += f"{exp.var.current['frequency']} Hz: threshold = {exp.var.dynamic['mean']} Hz<br />"
+#    ret = exp.interface.get_resp()
+
 def post_exp(exp):
     print('POST EXP')
-    exp.interface.stop(exp, prompt="Experiment completed, thank you for participating.", archive=True, destroy=True, sleep=10)
+    exp.interface.stop(exp, prompt=f"Experiment completed, thank you for participating. Your results:<br /><br />{exp.user.results}", archive=True, destroy=True, sleep=10)
 
 def pre_block(exp):
     print(f'PRE BLOCK {exp.run.block}')
     # Runs once before every block of trials (4 blocks in this case because of 4 frequencies)
     exp.interface.lower_right_text = f"Block {exp.run.block + 1} of {exp.var.nblocks}"
+    exp.interface.prompt1 = "Click a button to begin"
 
 if __name__ == '__main__':
     argv = sys.argv[1:]

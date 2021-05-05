@@ -6,10 +6,11 @@ import os
 import sys
 import time
 
-import psylab           # https://github.com/cbrown1/psylab
 import numpy as np
+import scipy.signal
 import soundfile as sf
 
+import psylab           # https://github.com/cbrown1/psylab
 import gustav
 from gustav.forms.html import nafc as theForm
 
@@ -20,16 +21,16 @@ def setup(exp):
 
     # General Experimental Variables
     exp.url = 'nafc'
-    exp.name = '_quiet_thresholds_'     # Experiment name. Accessible as $name when logging or recording data
+    exp.name = 'gap_detection'          # Experiment name. Accessible as $name when logging or recording data
     exp.method = 'adaptive'             # 'constant' for constant stimuli, or 'adaptive' for a staircase procedure (SRT, etc)
-    exp.prompt = 'Which interval?'      # A prompt for subject
+    exp.prompt = 'Which interval contained the silent gap?'      # A prompt for subject
     exp.frontend = 'term'               # The frontend to use when interacting with subject or experimenter. Can be 'term', 'tk', or 'qt' (pyqt4)
-    exp.logFile = './$name_$date.log'   # The path to the logfile
+    exp.logFile = './log/$name_$date.log'   # The path to the logfile
     exp.logConsole = True               # Whether to direct log info to the console
     exp.logConsoleDelay = True          # When using a curses form, the console is not available. Set to True to delay print until end of exp when curses form is destroyed.
     exp.debug = False                   # Currently unused
     exp.recordData = True               # Whether to record data
-    exp.dataFile = './$name_$subj.py'   # The name of the data file
+    exp.dataFile = './data/$name__$subj.py'   # The name of the data file
     exp.dataString_trial = ''
     exp.dataString_block = ''
     exp.dataString_exp = ''
@@ -37,20 +38,22 @@ def setup(exp):
     exp.cacheTrials = False             # Currently unused
     exp.validKeys = '1,2';              # comma-delimited list of valid responses
     exp.quitKey = '/'
-    exp.title = 'n-AFC'
-    exp.note = "Quiet thresholds for pure tones"
+    exp.title = 'gapdetection'
+    exp.note = "Gap detection of noise bands"
     exp.comments = '''\
     '''
-    exp.info = '''Quiet thresholds for pure tones
+    exp.info = '''Gap detection of noise bands
 
-    In this experiment you will see 2 boxes on the screen displaying an audio player
-    The sounds will be played sequentially and you will be asked to choose the louder one
-    Please press 1 or 2 to make your selection
+    In this experiment you will hear two noise bursts in succession, and your task will be
+    to choose which of two contained a silent gap. If the gap occured during the first interval,
+    choose 1 (click on the 1 box or hit the 1 key), and if it occured in the second interval
+    then choose 2. If you get it correct, the task will get harder (the gap duration will
+    decrease), and if you get it wrong it will get easier. Just do your best and guess when
+    not sure.
     '''
     exp.welcome = f'''Welcome to the experiment.
     Before we start please provide informed consent on the next page.
     '''
-    exp.welcome += "\nID: " + exp.subjID
 
 
     """EXPERIMENT VARIABLES
@@ -92,12 +95,18 @@ def setup(exp):
         stim['masker'] = stim['masker'][0:stim['masker_samples_needed']]
     """
 
-    exp.var.factorial['frequency']= [
-                                    # '125',
-                                    # '250',
-                                    # '500',
+    exp.var.factorial['fc']= [
                                     '1000',
                                   ]
+    exp.var.factorial['bw']= [
+                                    '.125',
+                                    '.25',
+                                    '.5',
+                                    '1',
+#                                    '2',
+#                                    '4',
+                                  ]
+
     def step(exp):
         print(f'STEP')
         # A custom step function for adaptive tracking. This is actually the same as the default one, here for demo purposes
@@ -106,22 +115,22 @@ def setup(exp):
         exp.var.dynamic['value'] = min(exp.var.dynamic['value'], exp.var.dynamic['val_ceil'])
 
 
-    exp.var.dynamic = { 'name': 'Level',     # Name of the dynamic variable
-                    'units': 'dBSPL',    # Units of the dynamic variable
+    exp.var.dynamic = { 'name': 'dur',   # Name of the dynamic variable
+                    'units': 'ms',       # Units of the dynamic variable
                     'alternatives': 2,   # Number of alternatives
-                    'steps': [5, 5, 2, 2, 2, 2, 2, 2], # Stepsizes to use at each reversal (#revs = len)
+                    'steps': [2, 2, 1, 1, 1, 1, 1, 1], # Stepsizes to use at each reversal (#revs = len)
                     #'steps': [2, 2],    # Stepsizes to use at each reversal (#revs = len)
                     'downs': 2,          # Number of 'downs'
                     'ups': 1,            # Number of 'ups'
-                    'val_start': 50,     # Starting value
+                    'val_start': 16,     # Starting value
                     #'val_start': 0,     # Starting value
                     'val_floor': 0,      # Floor
                     'val_ceil': 70,      # Ceiling
                     'val_floor_n': 3,    # Number of consecutive floor values to quit at
                     'val_ceil_n': 3,     # Number of consecutive ceiling values to quit at
-                    'run_n_trials': 3,   # Set to non-zero to run exactly that number of trials
+                    'run_n_trials': 0,   # Set to non-zero to run exactly that number of trials
                     'max_trials': 60,    # Maximum number of trials to run
-                    'vals_to_avg': 3,    # The number of values to average
+                    'vals_to_avg': 6,    # The number of values to average
                     'step': step,        # optional. A custom step function. Signature: def step(exp)
                     'max_level': 80,
                    }
@@ -190,11 +199,14 @@ def pre_exp(exp):
     exp.interface.info = exp.info
     exp.interface.upper_left_text = f"Subject {exp.subjID}"
     exp.interface.prompt1 = "Press space to begin"
-    exp.interface.prompt2 = "Which Interval?"
+    exp.interface.prompt2 = "Which has the gap?"
     # Wait for info call
     ret = exp.interface.get_resp()
     fname = os.path.join(exp.interface.subjdir, ret['response_file'].split('/')[-1])
     exp.interface.dump_info(fname)
+
+    # Holds thresholds to display to user at end of experiment
+    exp.user.results = ""
 
 def prompt_response(exp):
     """
@@ -225,10 +237,35 @@ def pre_trial(exp):
     """
     print(f'PRE TRIAL {exp.run.trials_block}')
     exp.interface.lower_left_text = f'Trial: {exp.run.trials_block}'
-    interval_noi = np.zeros(int(exp.user.interval/1000.*exp.user.fs))
-    interval_sig = psylab.signal.tone(float(exp.var.current['frequency']),exp.user.fs,exp.user.interval)
-    interval_sig = psylab.signal.ramps(interval_sig,exp.user.fs)
-    interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
+
+    sig = np.random.randn(int(exp.user.interval / 1000. * exp.user.fs))
+    sig /= np.max(sig)
+
+    noi = np.random.randn(int(exp.user.interval / 1000. * exp.user.fs))
+    noi /= np.max(noi)
+
+    rms_sig = psylab.signal.rms(sig)
+    rms_noi = psylab.signal.rms(noi)
+    rms_targ = min(rms_sig, rms_noi)
+    sig *= rms_targ / rms_sig
+    noi *= rms_targ / rms_noi
+
+    fc_l,fc_h = psylab.signal.oct2f(float(exp.var.current['fc']), float(exp.var.current['bw'])/2.)
+    b_hp,a_hp = scipy.signal.butter(4, fc_l/(exp.user.fs/2.), btype='highpass')
+    b_lp,a_lp = scipy.signal.butter(4, fc_h/(exp.user.fs/2.), btype='lowpass')
+    sig = scipy.signal.lfilter(b_hp,a_hp,sig)
+    sig = scipy.signal.lfilter(b_lp,a_lp,sig)
+    noi = scipy.signal.lfilter(b_hp,a_hp,noi)
+    noi = scipy.signal.lfilter(b_lp,a_lp,noi)
+
+    gap_start = np.random.randint(int(psylab.signal.ms2samp(100, exp.user.fs)), int(psylab.signal.ms2samp(400-int(exp.var.dynamic['value']), exp.user.fs)))
+    gap_end = gap_start + int(psylab.signal.ms2samp(int(exp.var.dynamic['value']), exp.user.fs))
+
+    sig[gap_start:gap_end] = 0
+
+    interval_sig = psylab.signal.ramps(sig,exp.user.fs)
+    interval_noi = psylab.signal.ramps(noi,exp.user.fs)
+#    interval_sig = psylab.signal.atten(interval_sig,exp.var.dynamic['max_level']-exp.var.dynamic['value'])
 
     # Select correct answer randomly
     exp.var.dynamic['correct'] = np.random.randint(1, exp.var.dynamic['alternatives']+1)
@@ -266,14 +303,20 @@ def post_trial(exp):
             correct = True
         print(f'Got answer {exp.run.response}, correct: {correct}')
 
+def post_block(exp):
+#    exp.user.results += f"{exp.var.current['bw']} Hz: threshold = {exp.var.dynamic['mean']} Hz<br />"
+    exp.user.results += f"Bandwidth = {exp.var.current['bw']} Octaves: threshold = {exp.var.dynamic['mean']} ms<br />"
+
 def post_exp(exp):
     print('POST EXP')
-    exp.interface.stop(exp, prompt="Experiment completed, thank you for participating.", archive=True, destroy=True, sleep=10)
+#    exp.interface.stop(exp, prompt="Experiment completed, thank you for participating.", archive=True, destroy=True, sleep=10)
+    exp.interface.stop(exp, prompt=f"Experiment completed, thank you for participating. Your results:<br /><br />{exp.user.results}", archive=True, destroy=True, sleep=10)
 
 def pre_block(exp):
     print(f'PRE BLOCK {exp.run.block}')
     # Runs once before every block of trials (4 blocks in this case because of 4 frequencies)
     exp.interface.lower_right_text = f"Block {exp.run.block + 1} of {exp.var.nblocks}"
+    exp.interface.prompt1 = "Click a button to begin"
 
 if __name__ == '__main__':
     argv = sys.argv[1:]
